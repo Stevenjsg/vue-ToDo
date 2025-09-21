@@ -82,13 +82,13 @@ Sigue estos pasos para tener una copia del proyecto funcionando en tu máquina.
 1. **Clona el repositorio**
 
    ```bash
-   git clone [https://github.com/](https://github.com/)[tu-usuario]/[nombre-del-repositorio].git
+   git clone https://github.com/Stevenjsg/vue-ToDo.git
    ```
 
 2. **Navega a la carpeta del proyecto**
 
    ```bash
-   cd [nombre-del-repositorio]
+   cd vue-ToDo
    ```
 
 3. **Instala las dependencias**
