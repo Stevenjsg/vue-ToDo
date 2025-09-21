@@ -4,7 +4,6 @@ Una aplicación sencilla pero potente de "Lista de Tareas" (To-Do List) construi
 
 ![Captura de pantalla de la aplicación de lista de tareas](./src/assets/screenshot.png)
 
-> **Nota:** ¡No olvides hacer una captura de pantalla de tu aplicación y reemplazar la ruta de la imagen de arriba!
 
 ## ✨ Características
 
