@@ -1,12 +1,33 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import { ref } from 'vue'
+import type { Tarea } from './data/DataTypes'
 import FormToDo from './components/FormToDo.vue'
 import ListToDo from './components/ListToDo.vue'
 
-const tareas = ref<string[]>(['Aprender Vue 3', 'Aprender TypeScript'])
-const handleAgregarTarea = (tarea: string) => {
-  tareas.value.push(tarea)
+const tareas = ref<Tarea[]>([
+  {
+    id: 1,
+    descripcion: 'Tarea de ejemplo',
+    completada: false,
+    fechaCreacion: new Date(),
+    fechaModificacion: new Date(),
+    prioridad: 'media',
+    etiquetas: ['ejemplo', 'tarea'],
+  },
+])
+const handleAgregarTarea = (descripcion: string) => {
+  const nuevaTarea: Tarea = {
+    id: Date.now(),
+    descripcion: descripcion,
+    completada: false,
+    fechaCreacion: new Date(),
+    fechaModificacion: new Date(),
+    prioridad: 'media',
+    etiquetas: [],
+  }
+  console.log('Nueva tarea agregada:', nuevaTarea)
+  tareas.value.push(nuevaTarea)
 }
 const handleEliminarTarea = (index: number) => {
   tareas.value.splice(index, 1)
@@ -29,6 +50,11 @@ const handleEliminarTarea = (index: number) => {
   padding: 1rem;
   border: 1px solid #ccc;
   border-radius: 8px;
-  box-shadow: 4px 6px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.2);
+}
+h1 {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-weight: 800;
 }
 </style>

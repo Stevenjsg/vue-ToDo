@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { Tarea } from '@/data/DataTypes'
+
 const props = defineProps<{
-  tareas: string[]
+  tareas: Tarea[]
 }>()
 const emit = defineEmits(['tarea-eliminada'])
 </script>
@@ -10,8 +12,8 @@ const emit = defineEmits(['tarea-eliminada'])
     <h2>Lista de Tareas:</h2>
     <ul v-if="props.tareas.length > 0">
       <li v-for="(tarea, index) in props.tareas" :key="index">
-        {{ tarea }}
-        <button @click="emit('tarea-eliminada', index)">Eliminar</button>
+        {{ tarea.descripcion }} - {{ tarea.prioridad }}
+        <button class="btn-eliminar" @click="emit('tarea-eliminada', index)">Eliminar</button>
       </li>
     </ul>
     <p v-else>No hay tareas agregadas.</p>
@@ -36,5 +38,19 @@ li {
   align-items: center;
   padding: 0.5rem 0;
   border-bottom: 1px solid #eee;
+}
+.btn-eliminar {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-eliminar:hover {
+  background-color: #c82333;
+}
+p {
+  color: #666;
 }
 </style>
