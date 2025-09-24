@@ -5,17 +5,11 @@ import type { Tarea } from './data/DataTypes'
 import FormToDo from './components/FormToDo.vue'
 import ListToDo from './components/ListToDo.vue'
 
-const tareas = ref<Tarea[]>([
-  {
-    id: 1,
-    descripcion: 'Tarea de ejemplo',
-    completada: false,
-    fechaCreacion: new Date(),
-    fechaModificacion: new Date(),
-    prioridad: 'media',
-    etiquetas: ['ejemplo', 'tarea'],
-  },
-])
+const KEY_LOCAL = 'tareas-vue'
+import { saveLocal, readLocal } from './lib/saveLocal'
+
+const tareas = ref<Tarea[]>(readLocal(KEY_LOCAL))
+
 const handleAgregarTarea = (descripcion: string) => {
   const nuevaTarea: Tarea = {
     id: Date.now(),
@@ -27,6 +21,7 @@ const handleAgregarTarea = (descripcion: string) => {
     etiquetas: [],
   }
   console.log('Nueva tarea agregada:', nuevaTarea)
+  saveLocal(KEY_LOCAL, nuevaTarea)
   tareas.value.push(nuevaTarea)
 }
 const handleEliminarTarea = (index: number) => {

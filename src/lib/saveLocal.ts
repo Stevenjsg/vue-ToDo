@@ -1,15 +1,20 @@
-const saveLocal = (key: string, value: any) => {
-    if (typeof window !== 'undefined') {
-        localStorage.setItem(key, JSON.stringify(value));
-    }
-};
+import type { Tarea } from '@/data/DataTypes'
 
-const importSaveLocal = (key: string) => {
-    if (typeof window !== 'undefined') {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : null;
+const readLocal = (key: string): Tarea[] => {
+  if (typeof window !== 'undefined') {
+    const item = localStorage.getItem(key)
+    if (item) {
+      return JSON.parse(item)
     }
-    return null;
+  }
+  return []
 }
-    
-export { saveLocal, importSaveLocal };
+const saveLocal = (key: string, value: Tarea) => {
+  if (typeof window !== 'undefined') {
+    const listaTareas = readLocal(key)
+    listaTareas.push(value)
+    localStorage.setItem(key, JSON.stringify(listaTareas))
+  }
+}
+
+export { saveLocal, readLocal }

@@ -9,7 +9,7 @@ const emit = defineEmits(['tarea-eliminada'])
 
 <template>
   <div class="todo-list">
-    <h2>Lista de Tareas:</h2>
+    <h2>Lista de Tareas</h2>
     <ul v-if="props.tareas.length > 0">
       <li v-for="(tarea, index) in props.tareas" :key="index">
         {{ tarea.descripcion }} - {{ tarea.prioridad }}
@@ -22,7 +22,7 @@ const emit = defineEmits(['tarea-eliminada'])
 
 <style scoped>
 .todo-list {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   padding: 1rem;
   border-radius: 8px;
   border: 1px solid #ccc;
@@ -52,5 +52,11 @@ li {
 }
 p {
   color: #666;
+}
+h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 1rem;
+  font-weight: 700;
 }
 </style>
