@@ -16,5 +16,9 @@ const saveLocal = (key: string, value: Tarea) => {
     localStorage.setItem(key, JSON.stringify(listaTareas))
   }
 }
-
-export { saveLocal, readLocal }
+const updateLocal = (key: string, listaDeTareas: Tarea[]): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(key, JSON.stringify(listaDeTareas))
+  }
+}
+export { saveLocal, readLocal, updateLocal }

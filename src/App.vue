@@ -6,7 +6,7 @@ import FormToDo from './components/FormToDo.vue'
 import ListToDo from './components/ListToDo.vue'
 
 const KEY_LOCAL = 'tareas-vue'
-import { saveLocal, readLocal } from './lib/saveLocal'
+import { saveLocal, readLocal, updateLocal } from './lib/saveLocal'
 
 const tareas = ref<Tarea[]>(readLocal(KEY_LOCAL))
 
@@ -27,13 +27,26 @@ const handleAgregarTarea = (descripcion: string) => {
 const handleEliminarTarea = (index: number) => {
   tareas.value.splice(index, 1)
 }
+
+const handleToggleCompleted = (id: number) => {
+  const tarea = tareas.value.find((t) => t.id === id)
+  if (tarea) {
+    tarea.completada = !tarea.completada
+    tarea.fechaModificacion = new Date()
+    updateLocal(KEY_LOCAL, tareas.value)
+  }
+}
 </script>
 
 <template>
   <div class="todo-app">
     <h1>Lista para agregar tareas</h1>
     <FormToDo @tarea-agregada="handleAgregarTarea" />
-    <ListToDo :tareas="tareas" @tarea-eliminada="handleEliminarTarea" />
+    <ListToDo
+      :tareas="tareas"
+      @tarea-eliminada="handleEliminarTarea"
+      @toggle-completed="handleToggleCompleted"
+    />
   </div>
   <RouterView />
 </template>

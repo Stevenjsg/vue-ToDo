@@ -4,7 +4,7 @@ import type { Tarea } from '@/data/DataTypes'
 const props = defineProps<{
   tareas: Tarea[]
 }>()
-const emit = defineEmits(['tarea-eliminada'])
+const emit = defineEmits(['tarea-eliminada', 'toggle-completed'])
 </script>
 
 <template>
@@ -12,7 +12,14 @@ const emit = defineEmits(['tarea-eliminada'])
     <h2>Lista de Tareas</h2>
     <ul v-if="props.tareas.length > 0">
       <li v-for="(tarea, index) in props.tareas" :key="index">
-        {{ tarea.descripcion }} - {{ tarea.prioridad }}
+        <input
+          type="checkbox"
+          :checked="tarea.completada"
+          @change="emit('toggle-completed', tarea.id)"
+        />
+        <span :class="{ completada: tarea.completada }">
+          {{ tarea.descripcion }}
+        </span>
         <button class="btn-eliminar" @click="emit('tarea-eliminada', index)">Eliminar</button>
       </li>
     </ul>
@@ -21,6 +28,11 @@ const emit = defineEmits(['tarea-eliminada'])
 </template>
 
 <style scoped>
+.completada {
+  text-decoration: line-through;
+  opacity: 0.6;
+  color: green;
+}
 .todo-list {
   margin-top: 1.5rem;
   padding: 1rem;
@@ -31,13 +43,16 @@ ul {
   list-style: none;
   padding: 0;
 }
-
+span {
+  flex-grow: 1; /* El texto ocupa el espacio sobrante */
+}
 li {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0;
   border-bottom: 1px solid #eee;
+  gap: 0.5rem;
 }
 .btn-eliminar {
   background-color: #dc3545;
