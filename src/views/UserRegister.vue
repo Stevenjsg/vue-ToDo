@@ -22,6 +22,7 @@ const handleRegister = async () => {
     setTimeout(() => {
       router.push('/login')
     }, 2000)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (error.response && error.response.status === 409) {
       errorMessage.value = 'El email ya está en uso.'

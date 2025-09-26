@@ -1,98 +1,48 @@
 <script setup lang="ts">
-// import { ref } from 'vue'
-// import type { Tarea } from './data/DataTypes'
-import { RouterView, RouterLink } from 'vue-router'
-// import FormToDo from './components/FormToDo.vue'
-// import ListToDo from './components/ListToDo.vue'
-import { useAuthStore } from '@/stores/auth'
+import { ref } from 'vue'
+import { RouterView } from 'vue-router'
+import TheSidebar from './components/TheSidebar.vue'
+import { useAuthStore } from './stores/auth'
 
-// const KEY_LOCAL = 'tareas-vue'
-// import { saveLocal, readLocal, updateLocal } from './lib/saveLocal'
 const authStore = useAuthStore()
-// const tareas = ref<Tarea[]>(readLocal(KEY_LOCAL))
+const isSidebarCollapsed = ref(false)
 
-// const handleAgregarTarea = (descripcion: string) => {
-//   const nuevaTarea: Tarea = {
-//     id: Date.now(),
-//     descripcion: descripcion,
-//     completada: false,
-//     fechaCreacion: new Date(),
-//     fechaModificacion: new Date(),
-//     prioridad: 'media',
-//     etiquetas: [],
-//   }
-//   console.log('Nueva tarea agregada:', nuevaTarea)
-//   saveLocal(KEY_LOCAL, nuevaTarea)
-//   tareas.value.push(nuevaTarea)
-// }
-// const handleEliminarTarea = (index: number) => {
-//   tareas.value.splice(index, 1)
-// }
+const handleToggle = (collapsedState: boolean) => {
+  isSidebarCollapsed.value = collapsedState
+}
 
-// const handleToggleCompleted = (id: number) => {
-//   const tarea = tareas.value.find((t) => t.id === id)
-//   if (tarea) {
-//     tarea.completada = !tarea.completada
-//     tarea.fechaModificacion = new Date()
-//     updateLocal(KEY_LOCAL, tareas.value)
-//   }
-// }
+const handleLogout = () => {
+  authStore.logout()
+}
 </script>
 
 <template>
-  <header>
-    <nav>
-      <template v-if="authStore.isAuthenticated">
-        <RouterLink to="/tareas">Mis Tareas</RouterLink>
-        <button @click="authStore.logout">Cerrar Sesión</button>
-      </template>
-      <template v-else>
-        <RouterLink to="/login">Iniciar Sesión</RouterLink>
-        <RouterLink to="/register">Registro</RouterLink>
-      </template>
-    </nav>
-  </header>
+  <div class="app-layout" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
+    <TheSidebar @toggle="handleToggle" @logout="handleLogout" />
 
-  <main>
-    <RouterView />
-  </main>
+    <main class="main-content">
+      <RouterView />
+    </main>
+  </div>
 </template>
 
-<style scoped>
-.todo-app {
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.2);
-}
-h1 {
-  text-align: center;
-  margin-bottom: 1rem;
-  font-weight: 800;
-}
-/* Añade algunos estilos para la barra de navegación */
-header {
-  background-color: #2c3e50;
-  padding: 1rem;
-  color: white;
-}
-nav {
+<style>
+/* ... tus estilos de body ... */
+
+.app-layout {
   display: flex;
-  gap: 1rem;
-  align-items: center;
+  transition: padding-left 0.3s ease; /* Transición para el contenido */
 }
-nav a,
-nav button {
-  color: white;
-  text-decoration: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
+
+/* Estilo para que el contenido principal se ajuste */
+.main-content {
+  flex-grow: 1;
+  padding: 2rem;
+  transition: margin-left 0.3s ease; /* Animación suave del margen */
 }
-nav a.router-link-exact-active {
-  font-weight: bold;
+
+/* Cuando el sidebar se colapsa, ajustamos el margen del contenido */
+.app-layout.sidebar-collapsed .main-content {
+  margin-left: 80px; /* Margen igual al ancho del sidebar colapsado */
 }
 </style>
