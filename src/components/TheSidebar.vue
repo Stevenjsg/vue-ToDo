@@ -16,7 +16,7 @@ const isSidebarVisible = ref(false)
 const $emit = defineEmits(['toggleSidebar', 'logout'])
 
 const handleLogin = () => {
-  router.push('/login')
+  router.push('/auth')
 }
 
 const toggleSidebar = () => {
