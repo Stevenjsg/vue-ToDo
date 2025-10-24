@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 
 // --- ESTADO DEL FORMULARIO ---
 const descripcion = ref<string>('')
+const titulo = ref<string>('')
 const prioridad = ref<string>('media') // Prioridad por defecto
 const tags = ref<string[]>([])
 const etiquetaActual = ref<string>('')
@@ -38,6 +39,7 @@ const agregarTarea = () => {
   if (descripcion.value.trim() !== '') {
     // Emitimos un objeto con todos los datos de la nueva tarea
     emit('tarea-agregada', {
+      titulo: titulo.value.trim(),
       descripcion: descripcion.value.trim(),
       prioridad: prioridad.value,
       etiquetas: tags.value,
@@ -61,8 +63,15 @@ const agregarTarea = () => {
         <input
           class="input-descripcion"
           type="text"
+          v-model="titulo"
+          placeholder="Titulo de la tarea"
+          required
+        />
+        <input
+          class="input-descripcion"
+          type="text"
           v-model="descripcion"
-          placeholder="Nueva tarea"
+          placeholder="descripción de la tarea..."
           required
         />
 
@@ -138,6 +147,7 @@ form {
 
 .form-group {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
@@ -230,5 +240,10 @@ input::placeholder {
 }
 .btn-agregar:hover {
   background-color: var(--color-accent-hover);
+}
+@media (min-width: 768px) {
+  .form-group {
+    flex-direction: row;
+  }
 }
 </style>

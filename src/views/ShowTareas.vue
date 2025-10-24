@@ -1,133 +1,249 @@
 <script setup lang="ts">
-import { ref, onMounted, computed} from 'vue'
-import apiClient from '@/services/api' // Importa nuestro servicio
-import type { Tarea } from '@/data/DataTypes'
+import { ref, onUnmounted, computed, watchEffect } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import apiClient from '@/services/api'
+import type { Item } from '@/data/DataTypes'
 import FormToDo from '@/components/FormToDo.vue'
 import ListToDo from '@/components/ListToDo.vue'
+import { type Socket } from 'socket.io-client'
+import { connectSocket, joinProjectRoom, getSocket } from '@/services/socketService'
+import { useProjectStore } from '@/stores/projects'
 
-const tareas = ref<Tarea[]>([])
-const activeTag = ref<string | null>(null);
+const projectStore = useProjectStore()
+const authStore = useAuthStore()
+const allItems = ref<Item[]>([])
 const isLoading = ref(true)
-
-// 👇 1. NUEVO ESTADO PARA EL FILTRO DE COMPLETADO
-const completionFilter = ref<'all' | 'completed' | 'pending'>('all');
+const activeTag = ref<string | null>(null)
+const completionFilter = ref<'all' | 'completed' | 'pending'>('all')
 
 const setCompletionFilter = (filter: 'all' | 'completed' | 'pending') => {
-  completionFilter.value = filter;
-};
+  completionFilter.value = filter
+}
 
-const fetchTareas = async () => {
+// --- Fetch Data ---
+const fetchItems = async () => {
+  if (!authStore.isAuthenticated) return
+  // 👇 Solo busca si hay un proyecto activo
+  if (!projectStore.currentProjectId) {
+    allItems.value = [] // Limpia la lista si no hay proyecto seleccionado
+    isLoading.value = false
+    return
+  }
+
   try {
     isLoading.value = true
-    const response = await apiClient.get('/tareas')
-    tareas.value = response.data
+    // 👇 Pide solo items de TIPO 'task' Y del PROYECTO actual
+    const response = await apiClient.get('/items', {
+      params: {
+        tipo: 'task',
+        proyectoId: projectStore.currentProjectId, // 👈 Añade el filtro de proyecto
+      },
+    })
+    allItems.value = response.data
   } catch (error) {
-    console.error('Error al obtener las tareas:', error)
+    console.error('Error fetching items:', error)
+    allItems.value = []
   } finally {
     isLoading.value = false
   }
 }
+// --- Real-time Event Handlers ---
+const handleItemCreated = (newItem: Item) => {
+  console.log('Socket: New item received', newItem)
+  if (newItem.tipo === 'task' && !allItems.value.some((t) => t.id === newItem.id)) {
+    allItems.value.unshift(newItem)
+  }
+}
 
-// Llama a la función para obtener las tareas cuando el componente se monta
-onMounted(fetchTareas)
+const handleItemUpdated = (updatedItem: Item) => {
+  console.log('Socket: Item update received', updatedItem)
+  const index = allItems.value.findIndex((t) => t.id === updatedItem.id)
+  if (index !== -1) {
+    if (updatedItem.tipo === 'task') {
+      allItems.value.splice(index, 1, updatedItem)
+    } else {
+      allItems.value.splice(index, 1)
+    }
+  } else if (updatedItem.tipo === 'task') {
+    allItems.value.unshift(updatedItem)
+    console.log('Updated item added to list as it was not found.')
+  }
+}
 
-const handleTareaAgregada = async (nuevaTareaData: {
-  descripcion: string
+const handleItemDeleted = (data: { id: number }) => {
+  console.log('Socket: Item delete received', data)
+  allItems.value = allItems.value.filter((t) => t.id !== data.id)
+}
+
+// --- Watcher for Authentication and Initial Setup ---
+watchEffect(async () => {
+  // Ya no necesitamos getSocket() aquí al principio
+
+  if (authStore.isAuthenticated) {
+    console.log('Usuario autenticado, ejecutando setup de watchEffect...')
+    isLoading.value = true
+    await fetchItems() // Obtiene datos
+
+    const currentProjectId = 1 // Reemplaza con lógica real
+
+    try {
+      // Intenta obtener el socket, esperando la conexión si es necesario
+      console.log('Esperando conexión del socket...')
+      const currentSocket = await connectSocket() // Espera a que la promesa resuelva
+
+      if (currentSocket?.connected) {
+        console.log('Socket conectado, uniéndose a la sala y configurando listeners.')
+        joinProjectRoom(currentProjectId) // joinProjectRoom ya no necesita async/await aquí
+        removeSocketListeners() // Limpia listeners previos
+        setupSocketListeners(currentSocket) // Pasa el socket a la función de setup
+      } else {
+        // Esto no debería ocurrir si connectSocket funciona bien
+        console.error('Fallo al obtener instancia de socket conectado.')
+        isLoading.value = false
+      }
+    } catch (error) {
+      console.error('Error al conectar el socket en watchEffect:', error)
+      isLoading.value = false
+    }
+  } else {
+    // Usuario no autenticado
+    allItems.value = []
+    isLoading.value = false
+    removeSocketListeners() // Limpia listeners al desloguear
+    console.log('Usuario deslogueado, limpiando items y listeners.')
+  }
+})
+// --- Socket Listener Setup/Teardown ---
+// Ahora reciben la instancia del socket como argumento
+const setupSocketListeners = (socketInstance: Socket) => {
+  if (socketInstance) {
+    console.log('Añadiendo listeners de socket')
+    socketInstance.on('item_created', handleItemCreated)
+    socketInstance.on('item_updated', handleItemUpdated)
+    socketInstance.on('item_deleted', handleItemDeleted)
+  } else {
+    console.error('No se puede configurar listeners: instancia de socket inválida.')
+  }
+}
+
+const removeSocketListeners = () => {
+  const socketInstance = getSocket() // Obtén la instancia actual para limpiar
+  if (socketInstance) {
+    console.log('Quitando listeners de socket')
+    socketInstance.off('item_created', handleItemCreated)
+    socketInstance.off('item_updated', handleItemUpdated)
+    socketInstance.off('item_deleted', handleItemDeleted)
+  }
+}
+// --- Component Lifecycle Cleanup ---
+onUnmounted(() => {
+  removeSocketListeners()
+  // Optional: Leave room logic if implemented in socketService
+  // const currentProjectId = 1; // Replace with actual logic
+  // leaveProjectRoom(currentProjectId);
+})
+
+// --- Action Handlers (Emit from Children) ---
+
+const handleTareaAgregada = async (newItemData: {
+  titulo: string
+  descripcion?: string
   prioridad: string
   etiquetas: string[]
 }) => {
+  if (!projectStore.currentProjectId) {
+    alert('Selecciona un proyecto primero.')
+    return
+  }
   try {
-    // Llamamos al endpoint del backend para crear la tarea
-    await apiClient.post('/tareas', nuevaTareaData)
-
-    // Si la creación es exitosa, volvemos a cargar la lista de tareas para
-    // que la nueva aparezca inmediatamente.
-    await fetchTareas()
+    await apiClient.post('/items', {
+      ...newItemData,
+      tipo: 'task',
+      proyecto_id: projectStore.currentProjectId,
+    })
+    // Rely on socket event 'item_created' to update the list
   } catch (error) {
-    console.error('Error al crear la tarea:', error)
+    console.error('Error creating task:', error)
+    // TODO: Show user feedback
   }
 }
 
 const handleToggleCompletada = async (id: number) => {
-  // 1. Búsqueda y Actualización Optimista
-  const tarea = tareas.value.find(t => t.id === id);
-  if (tarea) {
-    // Cambiamos el estado en el frontend al instante para una mejor UX
-    tarea.completada = !tarea.completada; 
-    
-    // 2. Llamada a la API para persistir el cambio
+  const item = allItems.value.find((t) => t.id === id)
+  if (item) {
+    const originalState = item.completada
+    item.completada = !item.completada // Optimistic update
     try {
-      await apiClient.put(`/tareas/${id}`, { completada: tarea.completada });
+      await apiClient.put(`/items/${id}`, { completada: item.completada })
+      // Rely on socket event 'item_updated' for final confirmation
     } catch (error) {
-      console.error('Error al actualizar la tarea:', error);
-      // Si la API falla, revertimos el cambio en el frontend
-      tarea.completada = !tarea.completada; 
+      console.error('Error updating task:', error)
+      item.completada = originalState // Rollback
+      // TODO: Show user feedback
     }
   }
-};
-
-// 2. Nueva función para manejar el clic en un tag
-const handleTagClick = (tag: string) => {
-  // Si se hace clic en el tag ya activo, se desactiva el filtro
-  if (activeTag.value === tag) {
-    activeTag.value = null;
-  } else {
-    activeTag.value = tag;
-  }
-};
-
-// 3. Propiedad computada que filtra las tareas
-const filteredTareas = computed(() => {
-  let tareasFiltradas = tareas.value;
-
-  // --- PRIMER FILTRO: Por estado de completado ---
-  if (completionFilter.value === 'completed') {
-    tareasFiltradas = tareasFiltradas.filter(tarea => tarea.completada);
-  } else if (completionFilter.value === 'pending') {
-    tareasFiltradas = tareasFiltradas.filter(tarea => !tarea.completada);
-  }
-  // Si es 'all', no hacemos nada y pasamos todas las tareas.
-
-  // --- SEGUNDO FILTRO: Por etiqueta (tag) ---
-  if (activeTag.value) {
-    tareasFiltradas = tareasFiltradas.filter(tarea => 
-      tarea.etiquetas.includes(activeTag.value as string)
-    );
-  }
-
-  return tareasFiltradas;
-});
+}
 
 const handleEliminarTarea = async (id: number) => {
+  let index = -1
+  let removedItem: Item | undefined = undefined
   try {
-    await apiClient.delete(`/tareas/${id}`)
-    // Después de eliminar, recarga la lista de tareas
-    await fetchTareas()
+    // Optimistic update
+    index = allItems.value.findIndex((t) => t.id === id)
+    if (index !== -1) {
+      removedItem = allItems.value.splice(index, 1)[0]
+    }
+    await apiClient.delete(`/items/${id}`)
+    // Rely on socket event 'item_deleted' to confirm removal
   } catch (error) {
-    console.error('Error al eliminar la tarea:', error)
+    console.error('Error deleting task:', error)
+    // Rollback optimistic update
+    if (removedItem) {
+      allItems.value.splice(index, 0, removedItem)
+    }
+    // TODO: Show user feedback
   }
 }
+
+// --- Filter Handlers ---
+
+const handleTagClick = (tag: string) => {
+  activeTag.value = activeTag.value === tag ? null : tag
+}
+
+// --- Computed Property for Filtering ---
+const filteredItems = computed(() => {
+  let itemsFiltrados = allItems.value
+  if (completionFilter.value === 'completed') {
+    itemsFiltrados = itemsFiltrados.filter((item) => item.completada)
+  } else if (completionFilter.value === 'pending') {
+    itemsFiltrados = itemsFiltrados.filter((item) => !item.completada)
+  }
+  if (activeTag.value) {
+    itemsFiltrados = itemsFiltrados.filter((item) =>
+      item.etiquetas.includes(activeTag.value as string),
+    )
+  }
+  return itemsFiltrados
+})
 </script>
 
 <template>
   <div class="tareas-container">
     <h1>Mis Tareas</h1>
-     <div class="status-filters">
-      <button 
-        @click="setCompletionFilter('all')" 
-        :class="{ 'active': completionFilter === 'all' }"
-      >
+    <div class="status-filters">
+      <button @click="setCompletionFilter('all')" :class="{ active: completionFilter === 'all' }">
         Todas
       </button>
-      <button 
-        @click="setCompletionFilter('pending')" 
-        :class="{ 'active': completionFilter === 'pending' }"
+      <button
+        @click="setCompletionFilter('pending')"
+        :class="{ active: completionFilter === 'pending' }"
       >
         Pendientes
       </button>
-      <button 
-        @click="setCompletionFilter('completed')" 
-        :class="{ 'active': completionFilter === 'completed' }"
+      <button
+        @click="setCompletionFilter('completed')"
+        :class="{ active: completionFilter === 'completed' }"
       >
         Completadas
       </button>
@@ -137,10 +253,10 @@ const handleEliminarTarea = async (id: number) => {
 
       <div class="lista-container">
         <div v-if="isLoading">Cargando...</div>
-        <div v-else-if="tareas.length === 0">No tienes tareas.</div>
-        <ListToDo 
-          v-else 
-          :tareas="filteredTareas" 
+        <div v-else-if="allItems.length === 0">No tienes tareas. ¡Crea una nueva!</div>
+        <ListToDo
+          v-else
+          :items="filteredItems"
           :activeTag="activeTag"
           @toggle-completada="handleToggleCompletada"
           @eliminar-tarea="handleEliminarTarea"

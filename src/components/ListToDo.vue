@@ -1,37 +1,37 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { Tarea } from '@/data/DataTypes'
+import type { Item } from '@/data/DataTypes'
 
 const props = defineProps<{
-  tareas: Tarea[]
+  items: Item[]
   activeTag: string | null
 }>()
 
-const emit = defineEmits(['eliminar-tarea', 'toggle-completada', 'tag-clicked']); // 2. Define el nuevo emit
+const emit = defineEmits(['eliminar-item', 'toggle-completada', 'tag-clicked']) // 2. Define el nuevo emit
 
 // --- LÓGICA DE CONFIRMACIÓN DE BORRADO ---
-const tareaAEliminarId = ref<number | null>(null)
+const itemAEliminarId = ref<number | null>(null)
 
 const iniciarEliminacion = (id: number) => {
-  tareaAEliminarId.value = id
+  itemAEliminarId.value = id
 }
 
 const confirmarEliminacion = () => {
-  if (tareaAEliminarId.value !== null) {
-    emit('eliminar-tarea', tareaAEliminarId.value)
+  if (itemAEliminarId.value !== null) {
+    emit('eliminar-item', itemAEliminarId.value)
   }
-  tareaAEliminarId.value = null
+  itemAEliminarId.value = null
 }
 
 const cancelarEliminacion = () => {
-  tareaAEliminarId.value = null
+  itemAEliminarId.value = null
 }
 
 // --- LÓGICA PARA FILTROS DE ETIQUETAS ---
 const allTags = computed(() => {
   const tagsSet = new Set<string>()
-  props.tareas.forEach(tarea => {
-    tarea.etiquetas.forEach(tag => tagsSet.add(tag))
+  props.items.forEach((item) => {
+    item.etiquetas.forEach((tag) => tagsSet.add(tag))
   })
   return Array.from(tagsSet)
 })
@@ -41,23 +41,23 @@ const allTags = computed(() => {
 
 const formatDate = (date: string | Date): string => {
   // Si la fecha es nula o undefined, devuelve un string vacío para no mostrar nada.
-  if (!date) return ''; 
+  if (!date) return ''
 
-  const now = new Date();
-  const taskDate = new Date(date);
-  
+  const now = new Date()
+  const taskDate = new Date(date)
+
   // Comprobamos si la fecha es válida
-  if (isNaN(taskDate.getTime())) return '';
+  if (isNaN(taskDate.getTime())) return ''
 
-  const diffSeconds = Math.floor((now.getTime() - taskDate.getTime()) / 1000);
+  const diffSeconds = Math.floor((now.getTime() - taskDate.getTime()) / 1000)
 
-  if (diffSeconds < 60) return 'hace unos segundos';
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  if (diffMinutes < 60) return `hace ${diffMinutes} min`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `hace ${diffHours} h`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `hace ${diffDays} día(s)`;
+  if (diffSeconds < 60) return 'hace unos segundos'
+  const diffMinutes = Math.floor(diffSeconds / 60)
+  if (diffMinutes < 60) return `hace ${diffMinutes} min`
+  const diffHours = Math.floor(diffMinutes / 60)
+  if (diffHours < 24) return `hace ${diffHours} h`
+  const diffDays = Math.floor(diffHours / 24)
+  return `hace ${diffDays} día(s)`
 }
 
 // ...
@@ -66,52 +66,53 @@ const formatDate = (date: string | Date): string => {
 <template>
   <div class="task-list-container">
     <div class="tag-filters" v-if="allTags.length > 0">
-      <button 
-        v-for="tag in allTags" 
-        :key="tag" 
+      <button
+        v-for="tag in allTags"
+        :key="tag"
         class="tag-pill"
-        :class="{ 'active': activeTag === tag }"
+        :class="{ active: activeTag === tag }"
         @click="emit('tag-clicked', tag)"
       >
         {{ tag }}
       </button>
     </div>
 
-    <ul v-if="props.tareas.length > 0" class="task-list">
-      <li v-for="tarea in props.tareas" :key="tarea.id" class="task-item" :class="{ 'completada': tarea.completada }">
-        
-        <input 
-          type="checkbox" 
-          class="task-checkbox" 
-          :checked="tarea.completada" 
-          @change="emit('toggle-completada', tarea.id)" 
+    <ul v-if="props.items.length > 0" class="task-list">
+      <li
+        v-for="item in props.items"
+        :key="item.id"
+        class="task-item"
+        :class="{ completada: item.completada }"
+      >
+        <input
+          type="checkbox"
+          class="task-checkbox"
+          :checked="item.completada"
+          @change="emit('toggle-completada', item.id)"
         />
-        
+
         <div class="task-content">
-          <p class="task-description">{{ tarea.descripcion }}</p>
+          <p class="task-description">{{ item.descripcion }}</p>
           <div class="task-meta">
-            <span class="task-date">{{ formatDate(tarea.fecha_modificacion) }}</span>
+            <span class="task-date">{{ formatDate(item.fecha_actualizacion) }}</span>
             <div class="task-tags">
-              <span v-for="tag in tarea.etiquetas" :key="tag" class="task-tag-item">{{ tag }}</span>
+              <span v-for="tag in item.etiquetas" :key="tag" class="task-tag-item">{{ tag }}</span>
             </div>
           </div>
         </div>
 
         <div class="task-actions">
-          <div v-if="tareaAEliminarId === tarea.id" class="delete-confirm">
+          <div v-if="itemAEliminarId === item.id" class="delete-confirm">
             <button @click="confirmarEliminacion" class="btn-confirm">Ok</button>
             <button @click="cancelarEliminacion" class="btn-cancel">X</button>
           </div>
-          <button v-else @click="iniciarEliminacion(tarea.id)" class="btn-eliminar">
-            🗑️
-          </button>
+          <button v-else @click="iniciarEliminacion(item.id)" class="btn-eliminar">🗑️</button>
         </div>
-
       </li>
     </ul>
-    
+
     <div v-else class="no-tasks-message">
-      <p>No tienes tareas pendientes. ¡Felicidades o a crear una nueva!</p>
+      <p>No tienes items pendientes. ¡Felicidades o a crear una nueva!</p>
     </div>
   </div>
 </template>
@@ -147,7 +148,7 @@ const formatDate = (date: string | Date): string => {
   border-color: var(--color-accent);
 }
 
-/* --- Lista de Tareas --- */
+/* --- Lista de items --- */
 .task-list {
   list-style: none;
   padding: 0;
@@ -179,7 +180,7 @@ const formatDate = (date: string | Date): string => {
   accent-color: var(--color-accent);
 }
 
-/* --- Contenido de la Tarea --- */
+/* --- Contenido de la item --- */
 .task-content {
   flex-grow: 1;
 }
@@ -209,7 +210,7 @@ const formatDate = (date: string | Date): string => {
   border-radius: 12px;
 }
 
-/* --- Acciones de la Tarea --- */
+/* --- Acciones de la item --- */
 .task-actions {
   min-width: 80px;
   text-align: right;
@@ -235,7 +236,8 @@ const formatDate = (date: string | Date): string => {
   display: flex;
   gap: 0.5rem;
 }
-.btn-confirm, .btn-cancel {
+.btn-confirm,
+.btn-cancel {
   border: none;
   padding: 0.5rem;
   border-radius: 4px;
@@ -260,7 +262,7 @@ const formatDate = (date: string | Date): string => {
   text-decoration: line-through;
 }
 
-/* --- Mensaje de No Tareas --- */
+/* --- Mensaje de No items --- */
 .no-tasks-message {
   text-align: center;
   padding: 2rem;

@@ -14,12 +14,13 @@ const setView = (view: 'Login' | 'Register') => {
 }
 
 const onAuthSuccess = () => {
-  router.push('/tareas')
+  router.push('/app/tareas')
 }
 </script>
 
 <template>
   <div class="auth-container">
+    <a href="/">Inicio</a>
     <div class="auth-card">
       <div class="auth-toggle">
         <button :class="{ active: activeComponentName === 'Login' }" @click="setView('Login')">
@@ -41,21 +42,26 @@ const onAuthSuccess = () => {
 </template>
 
 <style scoped>
+/* ==========================================================================
+   Base Styles (Mobile First)
+   ========================================================================== */
 .auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 80vh;
+  min-height: 90vh; /* Slightly adjusted for better vertical centering */
+  padding: 1rem; /* Add padding for small screens */
+  box-sizing: border-box; /* Include padding in height/width calculation */
 }
 
 .auth-card {
-  width: 100%;
-  max-width: 400px;
+  width: 100%; /* Take full width on small screens */
+  /* max-width: 400px; --- We'll add this back in the media query --- */
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  overflow: hidden; /* Importante para los bordes redondeados */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Slightly softer shadow */
+  overflow: hidden;
 }
 
 .auth-toggle {
@@ -80,17 +86,16 @@ const onAuthSuccess = () => {
   border-bottom-color: var(--color-accent);
 }
 
-/* Estilos para el formulario (usado por ambos componentes) */
 .auth-form {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  padding: 2rem;
+  padding: 1.5rem; /* Slightly reduced padding for mobile */
 }
 
 .auth-form h2 {
   text-align: center;
-  margin: 0;
+  margin: 0 0 0.5rem 0; /* Add slight bottom margin */
   color: var(--color-text-primary);
 }
 
@@ -103,7 +108,8 @@ const onAuthSuccess = () => {
   font-size: 1rem;
 }
 
-.auth-form button {
+.auth-form button[type='submit'] {
+  /* More specific selector for the submit button */
   background-color: var(--color-accent);
   color: white;
   border: none;
@@ -113,8 +119,9 @@ const onAuthSuccess = () => {
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.2s;
+  margin-top: 0.5rem; /* Add slight top margin */
 }
-.auth-form button:hover {
+.auth-form button[type='submit']:hover {
   background-color: var(--color-accent-hover);
 }
 
@@ -124,9 +131,7 @@ const onAuthSuccess = () => {
   font-size: 0.9rem;
 }
 
-/* --- ANIMACIÓN DE TRANSICIÓN --- */
-/* Esta animación crea un suave fundido (fade) entre los formularios */
-
+/* --- ANIMATION --- */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
@@ -135,5 +140,19 @@ const onAuthSuccess = () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* ==========================================================================
+   Desktop Styles (using media query)
+   ========================================================================== */
+@media (min-width: 480px) {
+  /* Adjust breakpoint as needed (e.g., 600px) */
+  .auth-card {
+    max-width: 400px; /* Re-apply max-width for larger screens */
+  }
+
+  .auth-form {
+    padding: 2rem; /* Restore larger padding */
+  }
 }
 </style>
