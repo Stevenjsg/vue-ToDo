@@ -7,46 +7,62 @@ import IconUser from '@/assets/icon/IconUser.vue'
 import IconLogout from '@/assets/icon/IconLogout.vue'
 import IconLogin from '@/assets/icon/IconLogin.vue'
 import IconPlus from '@/assets/icon/IconPlus.vue'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
+
 const { isVisible } = defineProps<{
   isVisible: boolean
 }>()
 
 const authStore = useAuthStore()
 const projectStore = useProjectStore()
+
 const router = useRouter()
+
+const showLogoutConfirm = ref(false)
+const showCreateProjectModal = ref(false)
+const newProjectName = ref('')
+
 const emit = defineEmits(['close', 'logout'])
 
 const handleLogin = () => {
   emit('close') // Cierra el sidebar al ir a login
   router.push('/auth')
 }
+const handleLogoutConfirmed = () => {
+  emit('logout') // Emite el evento original al padre (AppLayout)
+  // No necesitas cerrar el modal aquí, el componente lo hace solo
+}
+const requestLogout = () => {
+  showLogoutConfirm.value = true
+}
+
 onMounted(() => {
   if (authStore.isAuthenticated) {
     projectStore.fetchProjects()
   }
 })
 
-const handleCreateProject = async () => {
-  const projectName = prompt('Introduce el nombre del nuevo proyecto:')
-  if (projectName) {
+const requestCreateProject = () => {
+  newProjectName.value = '' // Limpia el input antes de abrir
+  showCreateProjectModal.value = true
+}
+const handleConfirmCreateProject = async () => {
+  const name = newProjectName.value.trim()
+  if (name) {
     try {
-      await projectStore.createProject(projectName)
-      // Opcional: Muestra una notificación de éxito
-      emit('close') // Cierra el sidebar si está en móvil
+      await projectStore.createProject(name)
+      // El modal se cierra solo porque @confirm también emite update:visible
+      emit('close') // Cierra el sidebar en móvil
     } catch (error) {
-      console.error('Error al crear el proyecto:', error) // Muestra un error simple
+      console.error('Error al crear el proyecto:', error)
+      alert('Error al crear el proyecto.') // O una notificación mejor
     }
+  } else {
+    alert('Introduce un nombre para el proyecto.')
   }
 }
-
 // Función para establecer el proyecto activo
-const selectProject = (id: number) => {
-  projectStore.setCurrentProject(id)
-  emit('close') // Cierra el sidebar en móvil al seleccionar
-  // Opcional: Navegar a la vista de tareas de ese proyecto si usas rutas anidadas
-  // router.push(`/app/proyectos/${id}/tareas`);
-}
 </script>
 
 <template>
@@ -57,7 +73,11 @@ const selectProject = (id: number) => {
     <nav class="navigation">
       <ul>
         <li>
-          <RouterLink to="/app/tareas" class="sidebar-item" @click="emit('close')">
+          <RouterLink
+            :to="{ name: 'PersonalTasks' }"
+            class="sidebar-item"
+            :class="{ active: $route.name === 'PersonalTasks' }"
+          >
             <IconTask />
             <span class="item-text">Mis Tareas</span>
           </RouterLink>
@@ -78,7 +98,7 @@ const selectProject = (id: number) => {
       <div class="projects-section">
         <h3 class="section-title">
           <span class="item-text">Proyectos</span>
-          <button @click="handleCreateProject" class="add-project-btn" title="Crear proyecto">
+          <button @click="requestCreateProject" class="add-project-btn" title="Crear proyecto">
             <IconPlus />
           </button>
         </h3>
@@ -87,14 +107,13 @@ const selectProject = (id: number) => {
         </ul>
         <ul v-else-if="projectStore.projectList.length > 0">
           <li v-for="project in projectStore.projectList" :key="project.id">
-            <button
-              @click="selectProject(project.id)"
+            <RouterLink
+              :to="{ name: 'ProjectTasks', params: { projectId: project.id } }"
               class="sidebar-item project-item"
-              :class="{ active: projectStore.currentProjectId === project.id }"
             >
               <span>#</span>
               <span class="item-text">{{ project.nombre }}</span>
-            </button>
+            </RouterLink>
           </li>
         </ul>
         <p v-else class="no-projects item-text">No hay proyectos.</p>
@@ -102,7 +121,7 @@ const selectProject = (id: number) => {
     </nav>
 
     <div class="footer">
-      <button v-if="authStore.isAuthenticated" @click="emit('logout')" class="sidebar-item">
+      <button v-if="authStore.isAuthenticated" @click="requestLogout" class="sidebar-item">
         <IconLogout /> <span class="item-text">Cerrar Sesión</span>
       </button>
       <button v-else @click="handleLogin" class="sidebar-item">
@@ -110,9 +129,49 @@ const selectProject = (id: number) => {
       </button>
     </div>
   </aside>
+  <ConfirmationModal
+    v-model:visible="showLogoutConfirm"
+    title="Confirmar Cierre de Sesión"
+    message="¿Estás seguro de que quieres salir?"
+    confirm-text="Cerrar Sesión"
+    confirm-variant="danger"
+    @confirm="handleLogoutConfirmed"
+  />
+  <ConfirmationModal
+    v-model:visible="showCreateProjectModal"
+    title="Crear Nuevo Proyecto"
+    message="Introduce el nombre para tu nuevo proyecto:"
+    confirm-text="Crear"
+    @confirm="handleConfirmCreateProject"
+  >
+    <input
+      type="text"
+      v-model="newProjectName"
+      placeholder="Nombre del proyecto..."
+      class="modal-input"
+      @keyup.enter="handleConfirmCreateProject"
+    />
+  </ConfirmationModal>
 </template>
 
 <style scoped>
+.sidebar-item.router-link-active, /* Para rutas hijas */
+.sidebar-item.router-link-exact-active {
+  /* Para rutas exactas */
+  background-color: var(--color-accent);
+  color: white;
+}
+.modal-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  box-sizing: border-box; /* Importante */
+}
+
 .projects-section {
   margin-top: 2rem;
   border-top: 1px solid var(--color-border);
@@ -152,7 +211,13 @@ const selectProject = (id: number) => {
   /* Hereda estilos de .sidebar-item */
   font-weight: 400;
 }
-
+.sidebar-item.active {
+  background-color: var(--color-accent);
+  color: white;
+}
+.sidebar-item.active:hover {
+  background-color: var(--color-accent-hover);
+}
 /* Estilo para el proyecto activo */
 .project-item.active {
   background-color: var(--color-accent);
