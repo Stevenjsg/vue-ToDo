@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 // Importa tus layouts y vistas
@@ -32,9 +32,18 @@ const routes = [
     meta: { requiresAuth: true }, // 👈 Protege todas las rutas hijas
     children: [
       {
-        path: 'tareas', // Se resuelve como /app/tareas
-        name: 'Tareas',
+        path: 'tareas/personales', // Se resuelve como /app/tareas
+        name: 'PersonalTasks',
+        props: { projectId: null },
         component: ShowTareas,
+      },
+      {
+        path: 'projects/:projectId/tasks',
+        name: 'ProjectTasks',
+        component: ShowTareas,
+        props: (route: RouteLocationNormalized) => ({
+          projectId: parseInt(route.params.projectId as string, 10),
+        }),
       },
       {
         path: 'perfil', // Se resuelve como /app/perfil
@@ -69,7 +78,7 @@ router.beforeEach(async (to, _from) => {
 
   if (isGuestRoute && isAuth) {
     // Redirige al dashboard principal
-    return { name: 'Tareas' }
+    return { name: 'PersonalTasks' }
   }
 
   return true

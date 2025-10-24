@@ -9,12 +9,27 @@ export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
   // Guardamos el token. Lo inicializamos con el valor que haya en localStorage.
   const token = ref(localStorage.getItem('token'))
-
+  const userId = ref<number | null>(null)
   // --- GETTERS ---
   // Un getter para saber si el usuario está autenticado.
   const isAuthenticated = computed(() => !!token.value)
 
   // --- ACTIONS ---
+  const fetchUserProfile = async () => {
+    if (!token.value) return // Salir si no hay token
+    try {
+      const response = await apiClient.get('/users/me')
+      userId.value = response.data.id // 👈 Guarda el ID
+      // userProfile.value = response.data; // O guarda el perfil completo
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      // Podrías desloguear si el token es inválido (error 401)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((error as any).response?.status === 401) {
+        logout()
+      }
+    }
+  }
   /**
    * Maneja el login del usuario.
    * @param {string} email - El email del usuario.
@@ -30,9 +45,10 @@ export const useAuthStore = defineStore('auth', () => {
 
       localStorage.setItem('token', newToken)
       token.value = newToken
+      await fetchUserProfile()
       connectSocket()
       // 3. Usa la instancia importada
-      await router.push('/app/tareas') // Añadir await por si hay lógica asíncrona en guardias
+      await router.push({ name: 'PersonalTasks' })
     } catch (error) {
       console.error('Error en login:', error)
       // Lanza el error para que el componente que llamó a login sepa que falló
@@ -47,14 +63,29 @@ export const useAuthStore = defineStore('auth', () => {
     // Limpia el token de localStorage y del estado
     localStorage.removeItem('token')
     token.value = null
+    userId.value = null
     // Redirige al login
     disconnectSocket()
     router.push('/auth')
   }
-  const checkAuthAndConnect = () => {
+  const checkAuthAndConnect = async () => {
     if (token.value) {
-      connectSocket()
+      await fetchUserProfile() // Obtiene el ID si hay token
+      if (userId.value) {
+        // Solo conecta si obtuvimos un ID válido
+        connectSocket()
+      }
     }
   }
-  return { token, isAuthenticated, login, logout, checkAuthAndConnect }
+  const currentUserId = computed(() => userId.value)
+  return {
+    token,
+    isAuthenticated,
+    currentUserId,
+    login,
+    logout,
+    checkAuthAndConnect,
+    userId,
+    fetchUserProfile,
+  }
 })
