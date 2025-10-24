@@ -1,9 +1,21 @@
 import { io, Socket } from 'socket.io-client'
+import { useAuthStore } from '@/stores/auth'
 
 let socket: Socket | null = null
 let connectionPromise: Promise<Socket> | null = null
 
 export const getSocket = () => socket
+
+export const leaveProjectRoom = (projectId: number) => {
+  if (socket?.connected) {
+    const room = `project_${projectId}`
+    console.log(`Emitting leave_project for room: ${room}`)
+    socket.emit('leave_project', projectId) // Send event to backend
+    // Optional: socket.leave(room) on client-side too, though backend handles primary logic
+  } else {
+    console.warn('Socket not connected, cannot leave room.')
+  }
+}
 
 export const connectSocket = (): Promise<Socket> => {
   if (socket?.connected) {
@@ -23,21 +35,25 @@ export const connectSocket = (): Promise<Socket> => {
 
     newSocket.on('connect', () => {
       console.log('⚡️ Socket connected:', newSocket.id)
-      socket = newSocket // Assign to global variable
-      connectionPromise = null // Reset promise
-      resolve(socket) // Resolve the promise
-      // Add other listeners here or return socket and add them elsewhere
+      socket = newSocket
+      connectionPromise = null
 
-      newSocket.on('disconnect', (reason) => {
-        socket = null
-        console.log('Socket disconnected:', reason)
-      })
-      newSocket.on('joined_message', (message) => {
-        console.log('Joined message:', message)
-      })
-      newSocket.on('user_joined', (message) => {
-        console.log('User joined:', message)
-      })
+      // 👇 ENVIAR TOKEN AL CONECTAR 👇
+      const authStore = useAuthStore() // Obtén el store
+      const token = authStore.token
+      if (token) {
+        console.log('Authenticating socket...')
+        socket.emit('authenticate', token)
+      } else {
+        console.warn('Socket connected but no auth token found.')
+        // Podrías desconectar si la autenticación es obligatoria
+        // socket.disconnect();
+        // reject(new Error("No auth token"));
+        // return;
+      }
+
+      resolve(socket) // Resuelve DESPUÉS de intentar autenticar
+      // ... otros listeners ...
     })
 
     newSocket.on('connect_error', (err) => {
@@ -71,7 +87,18 @@ export const joinProjectRoom = async (projectId: number) => {
     console.error('Error connecting socket to join room:', error)
   }
 }
+// En src/services/socketService.ts
+export const joinUserRoom = (userId: number) => {
+  if (socket?.connected) {
+    socket.emit('join_user_room', userId) // Evento para el backend
+  }
+}
 
+export const leaveUserRoom = (userId: number) => {
+  if (socket?.connected) {
+    socket.emit('leave_user_room', userId) // Evento para el backend
+  }
+}
 // Add functions here to emit other events (e.g., emitTaskUpdate)
 // export const emitTaskUpdate = (taskData) => { ... };
 
