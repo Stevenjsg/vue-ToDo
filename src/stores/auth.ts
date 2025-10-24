@@ -2,13 +2,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import apiClient from '@/services/api'
-import { useRouter } from 'vue-router'
+import router from '@/router'
+import { connectSocket, disconnectSocket } from '@/services/socketService'
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---
   // Guardamos el token. Lo inicializamos con el valor que haya en localStorage.
   const token = ref(localStorage.getItem('token'))
-  const router = useRouter()
 
   // --- GETTERS ---
   // Un getter para saber si el usuario está autenticado.
@@ -21,17 +21,23 @@ export const useAuthStore = defineStore('auth', () => {
    * @param {string} password - La contraseña del usuario.
    * @returns {Promise<void>}
    */
+  // --- ACTIONS ---
   const login = async (email: string, password: string) => {
-    const response = await apiClient.post('/auth/login', { email, password })
-    const newToken = response.data.token
+    try {
+      // Es buena práctica envolver el await en try...catch
+      const response = await apiClient.post('/auth/login', { email, password })
+      const newToken = response.data.token
 
-    // Guarda el token en localStorage
-    localStorage.setItem('token', newToken)
-    // Actualiza el estado del token
-    token.value = newToken
-
-    // Redirige a las tareas
-    router.push('/tareas')
+      localStorage.setItem('token', newToken)
+      token.value = newToken
+      connectSocket()
+      // 3. Usa la instancia importada
+      await router.push('/app/tareas') // Añadir await por si hay lógica asíncrona en guardias
+    } catch (error) {
+      console.error('Error en login:', error)
+      // Lanza el error para que el componente que llamó a login sepa que falló
+      throw error
+    }
   }
 
   /**
@@ -42,8 +48,13 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token')
     token.value = null
     // Redirige al login
+    disconnectSocket()
     router.push('/auth')
   }
-
-  return { token, isAuthenticated, login, logout }
+  const checkAuthAndConnect = () => {
+    if (token.value) {
+      connectSocket()
+    }
+  }
+  return { token, isAuthenticated, login, logout, checkAuthAndConnect }
 })

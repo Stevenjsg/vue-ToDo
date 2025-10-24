@@ -1,21 +1,52 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// ... tus imports
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
+// Importa tus layouts y vistas
+import AppLayout from '../layouts/AppLayout.vue' // 👈 El nuevo layout
+import LandingPage from '../views/LandingPage.vue'
+import AuthView from '../views/AuthView.vue'
+import ShowTareas from '../views/ShowTareas.vue'
+import UserProfile from '@/views/UserProfile.vue'
+import PomodoroView from '@/views/PomodoroView.vue'
+// ... import UserProfile ...
+
 const routes = [
-  // ... otras rutas como la de login
+  // --- Rutas de Ancho Completo (sin sidebar) ---
   {
-    path: '/tareas',
-    name: 'Tareas',
-    component: () => import('../views/ShowTareas.vue'),
-    meta: { requiresAuth: true }, // 👈 Marca esta ruta como protegida
+    path: '/',
+    name: 'Landing',
+    component: LandingPage,
+    meta: { guest: true },
   },
   {
-    path: '/auth', // Una sola ruta para la autenticación
+    path: '/auth',
     name: 'Auth',
-    component: () => import('../views/AuthView.vue'),
+    component: AuthView,
     meta: { guest: true },
+  },
+
+  // --- Rutas de App (con sidebar) ---
+  {
+    path: '/app', // Un prefijo común (opcional pero recomendado)
+    component: AppLayout, // 👈 El layout principal
+    meta: { requiresAuth: true }, // 👈 Protege todas las rutas hijas
+    children: [
+      {
+        path: 'tareas', // Se resuelve como /app/tareas
+        name: 'Tareas',
+        component: ShowTareas,
+      },
+      {
+        path: 'perfil', // Se resuelve como /app/perfil
+        name: 'Perfil',
+        component: UserProfile,
+      },
+      {
+        path: 'pomodoro', // Se resuelve como /app/pomodoro
+        name: 'Pomodoro',
+        component: PomodoroView,
+      },
+    ],
   },
 ]
 
@@ -24,26 +55,23 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach(async (to, from) => {
+// Tu guardia de navegación ahora funciona perfectamente
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+router.beforeEach(async (to, _from) => {
   const authStore = useAuthStore()
-
   const isAuth = authStore.isAuthenticated
   const requiresAuth = to.meta.requiresAuth
   const isGuestRoute = to.meta.guest
 
-  // Caso 1: La ruta requiere autenticación y el usuario no está logueado
   if (requiresAuth && !isAuth) {
-    // Redirigir a la página de autenticación
     return { name: 'Auth' }
   }
 
-  // Caso 2: La ruta es para "invitados" y el usuario YA está logueado
   if (isGuestRoute && isAuth) {
-    // Redirigir a la página principal de tareas
+    // Redirige al dashboard principal
     return { name: 'Tareas' }
   }
 
-  // Si no se cumple ninguna de las condiciones anteriores, permite la navegación
   return true
 })
 
