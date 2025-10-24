@@ -67,9 +67,9 @@ const handleConfirmCreateProject = async () => {
 
 <template>
   <aside class="sidebar" :class="{ 'is-open': isVisible }">
-    <div class="header">
+    <header class="header">
       <div class="logo"><a href="/">MiApp</a></div>
-    </div>
+    </header>
     <nav class="navigation">
       <ul>
         <li>
@@ -120,14 +120,14 @@ const handleConfirmCreateProject = async () => {
       </div>
     </nav>
 
-    <div class="footer">
+    <footer class="footer">
       <button v-if="authStore.isAuthenticated" @click="requestLogout" class="sidebar-item">
         <IconLogout /> <span class="item-text">Cerrar Sesión</span>
       </button>
       <button v-else @click="handleLogin" class="sidebar-item">
         <IconLogin /> <span class="item-text">Iniciar Sesión</span>
       </button>
-    </div>
+    </footer>
   </aside>
   <ConfirmationModal
     v-model:visible="showLogoutConfirm"
@@ -206,7 +206,12 @@ const handleConfirmCreateProject = async () => {
   padding: 0;
   margin: 0;
 }
+.footer {
+  margin-top: auto;
+  padding-top: 1rem;
 
+  border-top: 1px solid var(--color-border);
+}
 .project-item {
   /* Hereda estilos de .sidebar-item */
   font-weight: 400;

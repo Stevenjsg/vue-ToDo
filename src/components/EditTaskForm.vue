@@ -1,15 +1,35 @@
-<script lang="ts" setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+import { ref, watch, computed } from 'vue'
+import type { Item } from '@/data/DataTypes'
 
-// --- ESTADO DEL FORMULARIO ---
-const descripcion = ref<string>('')
-const titulo = ref<string>('')
-const prioridad = ref<string>('media') // Prioridad por defecto
-const tags = ref<string[]>([])
-const etiquetaActual = ref<string>('')
-const mostrarInputTags = ref<boolean>(false)
+// Recibe el item a editar como prop
+const props = defineProps<{
+  item: Item
+}>()
 
-// --- DATOS PARA EL SELECT ---
+const emit = defineEmits(['update-task', 'cancel'])
+
+// Estado local del formulario, inicializado con los props
+const titulo = ref(props.item.titulo)
+const descripcion = ref(props.item.descripcion || '')
+const prioridad = ref(props.item.prioridad || 'media')
+const tags = ref([...props.item.etiquetas]) // Copia para no mutar prop
+const etiquetaActual = ref('')
+const mostrarInputTags = ref(false)
+
+// Recargar el estado si el item de la prop cambia (por si editas otro item sin cerrar el modal)
+watch(
+  () => props.item,
+  (newItem) => {
+    titulo.value = newItem.titulo
+    descripcion.value = newItem.descripcion || ''
+    prioridad.value = newItem.prioridad || 'media'
+    tags.value = [...newItem.etiquetas]
+  },
+  { immediate: true },
+) // immediate: true para carga inicial
+
+// --- Lógica de Prioridad y Tags (igual que en FormToDo) ---
 const prioridades = [
   { value: 'alta', text: 'Alta', color: '#e74c3c' },
   { value: 'media', text: 'Media', color: '#f39c12' },
@@ -19,8 +39,6 @@ const colorPrioridadSeleccionada = computed(() => {
   const prioridadActual = prioridades.find((p) => p.value === prioridad.value)
   return prioridadActual ? prioridadActual.color : '#ccc'
 })
-
-const emit = defineEmits(['tarea-agregada'])
 
 // --- LÓGICA DE LAS ETIQUETAS ---
 const agregarEtiqueta = () => {
@@ -34,58 +52,36 @@ const eliminarEtiqueta = (index: number) => {
   tags.value.splice(index, 1)
 }
 
-// --- LÓGICA DEL FORMULARIO PRINCIPAL ---
-const agregarTarea = () => {
-  // Ahora valida el 'titulo' en lugar de 'descripcion'
+// --- Lógica de Envío ---
+const handleSubmit = () => {
   if (titulo.value.trim() !== '') {
-    emit('tarea-agregada', {
+    emit('update-task', {
+      // Devuelve solo los campos que pueden cambiar
       titulo: titulo.value.trim(),
-      descripcion: descripcion.value.trim(), // Envía la descripción también
+      descripcion: descripcion.value.trim(),
       prioridad: prioridad.value,
       etiquetas: tags.value,
     })
-
-    // Resetea todos los campos
-    titulo.value = ''
-    descripcion.value = ''
-    prioridad.value = 'media'
-    tags.value = []
-    etiquetaActual.value = ''
-    mostrarInputTags.value = false
   }
 }
 </script>
 
 <template>
-  <form action="#" @submit.prevent="agregarTarea" class="modal-form-content">
+  <form @submit.prevent="handleSubmit" class="modal-form-content">
     <div class="form-field">
-      <label for="task-title">Título de la tarea</label>
-      <input
-        id="task-title"
-        class="input-titulo"
-        type="text"
-        v-model="titulo"
-        placeholder="Ej: Comprar pan"
-        required
-      />
+      <label for="edit-task-title">Título</label>
+      <input id="edit-task-title" type="text" v-model="titulo" required />
     </div>
 
     <div class="form-field">
-      <label for="task-description">Descripción (Opcional)</label>
-      <textarea
-        id="task-description"
-        class="input-descripcion"
-        v-model="descripcion"
-        placeholder="Añadir detalles..."
-        rows="3"
-      ></textarea>
+      <label for="edit-task-description">Descripción</label>
+      <textarea id="edit-task-description" v-model="descripcion" rows="3"></textarea>
     </div>
 
     <div class="form-field">
-      <label for="task-priority">Prioridad</label>
+      <label for="edit-task-priority">Prioridad</label>
       <select
-        id="task-priority"
-        class="input-prioridad"
+        id="edit-task-priority"
         v-model="prioridad"
         :style="{ color: colorPrioridadSeleccionada, borderColor: colorPrioridadSeleccionada }"
       >
@@ -122,9 +118,13 @@ const agregarTarea = () => {
       </button>
     </div>
 
-    <button class="btn-agregar" type="submit">Agregar Tarea</button>
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" @click="emit('cancel')">Cancelar</button>
+      <button type="submit" class="btn-primary">Actualizar Tarea</button>
+    </div>
   </form>
 </template>
+
 <style scoped>
 /* Quitamos .todo-form y h1 */
 
@@ -249,5 +249,31 @@ textarea::placeholder {
 }
 .btn-agregar:hover {
   background-color: var(--color-accent-hover);
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+.form-actions button {
+  /* Estilos base botones */
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.btn-secondary {
+  /* Estilos botón cancelar */
+  background-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+.btn-primary {
+  /* Estilos botón actualizar */
+  background-color: var(--color-accent);
+  color: white;
 }
 </style>

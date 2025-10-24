@@ -1,7 +1,6 @@
 <script setup lang="ts">
 // Importa los composables y stores necesarios
-import { computed, defineProps, toRef } from 'vue'
-import { useAuthStore } from '@/stores/auth'
+import { computed, defineProps, ref, toRef } from 'vue'
 import { useProjectStore, type Project } from '@/stores/projects'
 import { useRealtimeItems } from '@/composables/useRealtimeItems'
 import { useItemFilters } from '@/composables/useItemFilters'
@@ -9,13 +8,21 @@ import apiClient from '@/services/api'
 import FormToDo from '@/components/FormToDo.vue'
 import ListToDo from '@/components/ListToDo.vue'
 import type { Item } from '@/data/DataTypes'
+import BaseModal from '@/components/common/BaseModal.vue'
+import EditTaskForm from '@/components/EditTaskForm.vue'
 
-const authStore = useAuthStore()
 const projectStore = useProjectStore()
+const showAddTaskModal = ref(false)
+const showEditModal = ref(false)
+const itemToEdit = ref<Item | null>(null)
+
 const props = defineProps<{
   projectId: number | null // Recibe null de la ruta 'PersonalTasks' o number de 'ProjectTasks'
 }>()
-
+const requestEditItem = (item: Item) => {
+  itemToEdit.value = item // Guarda el item completo
+  showEditModal.value = true
+}
 const reactiveProjectId = toRef(props, 'projectId')
 
 // --- USA LOS COMPOSABLES ---
@@ -46,6 +53,7 @@ const handleTareaAgregada = async (newItemData: {
       proyecto_id: props.projectId,
     })
     // Rely on socket event 'item_created' to update the list
+    showAddTaskModal.value = false
   } catch (error) {
     console.error('Error creating task:', error)
     // TODO: Show user feedback
@@ -101,15 +109,46 @@ const handleEliminarItem = async (id: number) => {
   }
   // No necesitamos limpiar estado del modal aquí
 }
+const handleUpdateFromForm = async (updatedData: {
+  titulo: string
+  descripcion: string
+  prioridad: Item['prioridad']
+  etiquetas: string[]
+}) => {
+  if (!itemToEdit.value) return // Seguridad
+
+  const idToUpdate = itemToEdit.value.id
+
+  // Actualización optimista (opcional pero recomendado)
+  const index = allItems.value.findIndex((t) => t.id === idToUpdate)
+  let originalData = {} // Para rollback
+  if (index !== -1) {
+    originalData = { ...allItems.value[index] } // Copia superficial
+    Object.assign(allItems.value[index], updatedData) // Aplica cambios
+  }
+
+  try {
+    // Llama a la API PUT /items/:id con los nuevos datos
+    await apiClient.put(`/items/${idToUpdate}`, updatedData)
+    showEditModal.value = false // Cierra el modal si la API tiene éxito
+    // El evento de socket 'item_updated' confirmará/refinará el cambio
+  } catch (error) {
+    console.error('Error updating task from form:', error)
+    // Rollback si la API falla
+    if (index !== -1) {
+      Object.assign(allItems.value[index], originalData) // Restaura datos originales
+    }
+    // TODO: Mostrar error al usuario en el modal o con notificación
+  }
+}
 </script>
 
 <template>
   <div class="tareas-container">
-    <h1>{{ pageTitle }}</h1>
-
-    <div
-      v-if="!projectStore.currentProjectId && !projectStore.isLoading && authStore.isAuthenticated"
-    ></div>
+    <header class="header-actions">
+      <h1>{{ pageTitle }}</h1>
+      <button @click="showAddTaskModal = true" class="btn-add-task">+ Añadir Tarea</button>
+    </header>
 
     <div class="status-filters">
       <button @click="setCompletionFilter('all')" :class="{ active: completionFilter === 'all' }">
@@ -129,65 +168,73 @@ const handleEliminarItem = async (id: number) => {
       </button>
     </div>
 
-    <div class="tareas-layout">
-      <FormToDo @tarea-agregada="handleTareaAgregada" />
-
-      <div class="lista-container">
-        <div v-if="isLoading">Cargando...</div>
-        <div v-else-if="allItems.length === 0">
-          No tienes tareas en {{ projectStore.activeProject?.nombre || 'tu lista personal' }}.
-        </div>
-        <ListToDo
-          v-else
-          :items="filteredItems"
-          :activeTag="activeTag"
-          @toggle-completada="handleToggleCompletada"
-          @eliminar-item="handleEliminarItem"
-          @tag-clicked="handleTagClick"
-        />
+    <div class="lista-container">
+      <div v-if="isLoading">Cargando...</div>
+      <div v-else-if="allItems.length === 0">
+        No tienes tareas en {{ projectStore.activeProject?.nombre || 'tu lista personal' }}.
       </div>
+      <ListToDo
+        v-else
+        :items="filteredItems"
+        :activeTag="activeTag"
+        @toggle-completada="handleToggleCompletada"
+        @eliminar-item="handleEliminarItem"
+        @tag-clicked="handleTagClick"
+        @edit-item="requestEditItem"
+      />
     </div>
+    <BaseModal v-model:visible="showAddTaskModal" title="Agregar Nueva Tarea">
+      <FormToDo @tarea-agregada="handleTareaAgregada" />
+    </BaseModal>
+    <BaseModal v-model:visible="showEditModal" title="Editar Tarea">
+      <EditTaskForm
+        v-if="itemToEdit"
+        :item="itemToEdit"
+        @update-task="handleUpdateFromForm"
+        @cancel="showEditModal = false"
+      />
+    </BaseModal>
   </div>
 </template>
 
 <style scoped>
 .tareas-container {
-  max-width: 1200px;
+  max-width: 900px; /* Ajusta según prefieras */
   margin: 0 auto;
   padding: 1rem;
 }
 
-h1 {
-  text-align: center;
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 2rem;
+}
+
+h1 {
+  /* text-align: center; Ya no es necesario */
+  margin: 0; /* Quitamos márgenes extra */
   color: var(--color-heading);
 }
 
-/* --- Estilos Mobile First (por defecto) --- */
-/* Por defecto, los elementos se apilan uno encima del otro. */
-.tareas-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem; /* Espacio entre el formulario y la lista */
+.btn-add-task {
+  /* Reutiliza tu estilo .btn-primary o crea uno nuevo */
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-add-task:hover {
+  background-color: var(--color-accent-hover);
 }
 
-/* --- Media Query para pantallas más grandes (Desktop) --- */
-/* Cuando el ancho de la pantalla sea de 768px o más... */
-@media (min-width: 768px) {
-  .tareas-layout {
-    display: grid; /* ...cambiamos a un layout de Grid. */
-
-    /* Creamos dos columnas: la primera de 1fr y la segunda de 1.5fr.
-       Esto hace que la lista de tareas sea un poco más ancha que el formulario. */
-    grid-template-columns: 1fr 1.5fr;
-
-    gap: 2rem; /* Espacio entre las columnas */
-    align-items: start; /* Alinea los elementos en la parte superior de su celda */
-  }
-}
 .status-filters {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start; /* Alineados a la izquierda ahora */
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -211,5 +258,25 @@ h1 {
   background-color: var(--color-accent);
   color: white;
   border-color: var(--color-accent);
+}
+@media (min-width: 768px) {
+  .tareas-container {
+    padding: 2rem; /* Más padding en escritorio */
+  }
+
+  .header-actions {
+    flex-direction: row; /* Lado a lado en escritorio */
+    justify-content: space-between; /* Título a la izq, botón a la der */
+    align-items: center; /* Alineados verticalmente */
+  }
+
+  h1 {
+    font-size: 2.2rem; /* Título más grande en escritorio */
+  }
+
+  .status-filters {
+    justify-content: flex-start; /* Mantenemos a la izquierda o centramos si prefieres */
+    gap: 1rem; /* Más espacio */
+  }
 }
 </style>

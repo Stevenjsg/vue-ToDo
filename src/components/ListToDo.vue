@@ -7,7 +7,7 @@ const props = defineProps<{
   activeTag: string | null
 }>()
 
-const emit = defineEmits(['eliminar-item', 'toggle-completada', 'tag-clicked']) // 2. Define el nuevo emit
+const emit = defineEmits(['eliminar-item', 'toggle-completada', 'tag-clicked', 'edit-item']) // 2. Define el nuevo emit
 
 // --- LÓGICA DE CONFIRMACIÓN DE BORRADO ---
 const itemAEliminarId = ref<number | null>(null)
@@ -60,7 +60,19 @@ const formatDate = (date: string | Date): string => {
   return `hace ${diffDays} día(s)`
 }
 
-// ...
+// --- COLOR PRIORIDAD ---
+const priorityColor = (priority: Item['prioridad']) => {
+  switch (priority) {
+    case 'alta':
+      return '#e74c3c' // Rojo
+    case 'media':
+      return '#f39c12' // Naranja
+    case 'baja':
+      return '#3498db' // Azul
+    default:
+      return 'transparent' // O un gris claro como var(--color-border)
+  }
+}
 </script>
 
 <template>
@@ -77,13 +89,18 @@ const formatDate = (date: string | Date): string => {
       </button>
     </div>
 
-    <ul v-if="props.items.length > 0" class="task-list">
+    <TransitionGroup v-if="props.items.length > 0" name="list" tag="ul" class="task-list">
       <li
         v-for="item in props.items"
         :key="item.id"
-        class="task-item"
+        class="task-card"
         :class="{ completada: item.completada }"
       >
+        <div
+          class="priority-indicator"
+          :style="{ backgroundColor: priorityColor(item.prioridad) }"
+        ></div>
+
         <input
           type="checkbox"
           class="task-checkbox"
@@ -92,10 +109,43 @@ const formatDate = (date: string | Date): string => {
         />
 
         <div class="task-content">
-          <p class="task-description">{{ item.descripcion }}</p>
+          <p class="task-title">{{ item.titulo }}</p>
+          <p v-if="item.descripcion" class="task-description">{{ item.descripcion }}</p>
           <div class="task-meta">
-            <span class="task-date">{{ formatDate(item.fecha_actualizacion) }}</span>
-            <div class="task-tags">
+            <span class="task-date">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              {{ formatDate(item.fecha_actualizacion) }}
+            </span>
+            <div class="task-tags" v-if="item.etiquetas?.length">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
+                ></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
               <span v-for="tag in item.etiquetas" :key="tag" class="task-tag-item">{{ tag }}</span>
             </div>
           </div>
@@ -106,23 +156,34 @@ const formatDate = (date: string | Date): string => {
             <button @click="confirmarEliminacion" class="btn-confirm">Ok</button>
             <button @click="cancelarEliminacion" class="btn-cancel">X</button>
           </div>
-          <button v-else @click="iniciarEliminacion(item.id)" class="btn-eliminar">🗑️</button>
+          <button
+            v-if="itemAEliminarId !== item.id"
+            @click="emit('edit-item', item)"
+            class="btn-action btn-edit"
+            title="Editar"
+          >
+            ✏️
+          </button>
+          <button
+            v-if="itemAEliminarId !== item.id"
+            @click="iniciarEliminacion(item.id)"
+            class="btn-action btn-eliminar"
+            title="Eliminar"
+          >
+            🗑️
+          </button>
         </div>
       </li>
-    </ul>
+    </TransitionGroup>
 
     <div v-else class="no-tasks-message">
-      <p>No tienes items pendientes. ¡Felicidades o a crear una nueva!</p>
+      <p>No tienes tareas aquí. ¡Crea una nueva!</p>
     </div>
   </div>
 </template>
 
 <style scoped>
-.task-list-container {
-  width: 100%;
-}
-
-/* --- Filtros de Etiquetas --- */
+/* --- Filtros (sin cambios) --- */
 .tag-filters {
   display: flex;
   flex-wrap: wrap;
@@ -131,7 +192,6 @@ const formatDate = (date: string | Date): string => {
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--color-border);
 }
-
 .tag-pill {
   background-color: var(--color-surface);
   color: var(--color-text-secondary);
@@ -147,18 +207,37 @@ const formatDate = (date: string | Date): string => {
   color: white;
   border-color: var(--color-accent);
 }
-
-/* --- Lista de items --- */
-.task-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.tag-pill.active {
+  background-color: var(--color-accent);
+  color: white;
+  border-color: var(--color-accent);
 }
 
-.task-item {
+/* --- Lista y Transiciones --- */
+/* Quitamos estilos de ul aquí, TransitionGroup lo renderiza */
+.task-list {
+  list-style: none; /* Asegura que ul no tenga estilos */
+  padding: 0;
+  margin: 0;
+  padding-inline-start: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Espacio entre tarjetas */
+}
+
+/* Transiciones para añadir/eliminar */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.3s ease;
+}
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+/* --- Tarjeta de Tarea --- */
+.task-card {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -166,111 +245,163 @@ const formatDate = (date: string | Date): string => {
   background-color: var(--color-surface);
   border-radius: 8px;
   border: 1px solid var(--color-border);
-  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
 }
-.task-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.task-card:hover {
+  border-color: var(--color-border-hover, var(--color-border));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Indicador de Prioridad --- */
+.priority-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+}
+/* Ajusta el padding izquierdo para compensar el indicador */
+.task-card {
+  padding-left: calc(1rem + 5px);
 }
 
 /* --- Checkbox --- */
 .task-checkbox {
-  min-width: 20px;
-  height: 20px;
+  min-width: 18px;
+  height: 18px;
   accent-color: var(--color-accent);
+  cursor: pointer;
 }
 
-/* --- Contenido de la item --- */
+/* --- Contenido --- */
 .task-content {
   flex-grow: 1;
+  overflow: hidden;
+}
+
+.task-title {
+  margin: 0;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .task-description {
-  margin: 0 0 0.5rem 0;
-  font-weight: 500;
-  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin: 0.25rem 0 0.5rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .task-meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
   font-size: 0.8rem;
   color: var(--color-text-secondary);
+}
+.task-date,
+.task-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.task-meta svg {
+  flex-shrink: 0;
 }
 
 .task-tags {
   display: flex;
   gap: 0.5rem;
 }
-
 .task-tag-item {
-  background-color: var(--color-background);
+  background-color: var(--color-background); /* Ligeramente diferente para contraste */
   padding: 0.15rem 0.5rem;
   border-radius: 12px;
+  font-size: 0.75rem; /* Un poco más pequeño */
 }
 
-/* --- Acciones de la item --- */
+/* --- Acciones (Ocultas por defecto, visibles al hover) --- */
 .task-actions {
-  min-width: 80px;
-  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.task-card:hover .task-actions {
+  opacity: 1;
 }
 
-.btn-eliminar {
+.btn-action {
   background: none;
   border: none;
   color: var(--color-text-secondary);
   cursor: pointer;
-  font-size: 1.2rem;
   padding: 0.5rem;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem; /* Ajusta según el tamaño de tu icono */
+}
+.btn-action:hover {
+  background-color: var(--color-border);
 }
 .btn-eliminar:hover {
-  background-color: #e53e3e20;
-  color: #e53e3e;
+  color: #e53e3e; /* Rojo para eliminar */
+}
+.btn-edit:hover {
+  color: var(--color-accent);
 }
 
 .delete-confirm {
   display: flex;
   gap: 0.5rem;
 }
-.btn-confirm,
-.btn-cancel {
+.btn-confirm {
+  background-color: #e53e3e;
+  color: white;
   border: none;
   padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
 }
-.btn-confirm {
-  background-color: #e53e3e;
-  color: white;
-}
 .btn-cancel {
   background-color: var(--color-border);
   color: var(--color-text-primary);
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
 /* --- Estado Completado --- */
-.task-item.completada {
-  opacity: 0.6;
+.task-card.completada {
+  opacity: 0.7;
+  background-color: #2e473b1a;
 }
-
-.task-item.completada .task-description {
+.task-card.completada .task-title,
+.task-card.completada .task-description {
   text-decoration: line-through;
+  opacity: 0.8;
 }
 
-/* --- Mensaje de No items --- */
+/* --- Mensaje No Tareas --- */
 .no-tasks-message {
   text-align: center;
   padding: 2rem;
   color: var(--color-text-secondary);
-}
-.tag-pill.active {
-  background-color: var(--color-accent);
-  color: white;
-  border-color: var(--color-accent);
 }
 </style>
