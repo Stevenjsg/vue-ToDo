@@ -1,6 +1,6 @@
-import type { Tarea } from '@/data/DataTypes'
+import type { Item } from '@/data/DataTypes'
 
-const readLocal = (key: string): Tarea[] => {
+const readLocal = (key: string): Item[] => {
   if (typeof window !== 'undefined') {
     const item = localStorage.getItem(key)
     if (item) {
@@ -9,14 +9,14 @@ const readLocal = (key: string): Tarea[] => {
   }
   return []
 }
-const saveLocal = (key: string, value: Tarea) => {
+const saveLocal = (key: string, value: Item) => {
   if (typeof window !== 'undefined') {
     const listaTareas = readLocal(key)
     listaTareas.push(value)
     localStorage.setItem(key, JSON.stringify(listaTareas))
   }
 }
-const updateLocal = (key: string, listaDeTareas: Tarea[]): void => {
+const updateLocal = (key: string, listaDeTareas: Item[]): void => {
   if (typeof window !== 'undefined') {
     localStorage.setItem(key, JSON.stringify(listaDeTareas))
   }
