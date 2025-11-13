@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Crea una instancia de Axios con la URL base de tu backend
 const apiClient = axios.create({
-  baseURL: 'http://localhost:3000/api', // O la URL de tu API desplegada en Render
+  baseURL: `${import.meta.env.BASE_URL}/api`, // O la URL de tu API desplegada en Render
   headers: {
     'Content-Type': 'application/json',
   },

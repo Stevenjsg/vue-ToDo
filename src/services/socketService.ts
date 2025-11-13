@@ -29,7 +29,7 @@ export const connectSocket = (): Promise<Socket> => {
   connectionPromise = new Promise((resolve, reject) => {
     // ... (get token if needed) ...
     console.log('Attempting to connect socket...')
-    const newSocket = io('http://localhost:3000', {
+    const newSocket = io(import.meta.env.BASE_URL, {
       /* ... */
     })
 
