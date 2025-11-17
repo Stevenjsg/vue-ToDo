@@ -43,16 +43,16 @@ const routes = [
       {
         path: 'tareas/personales', // Se resuelve como /app/tareas
         name: 'PersonalTasks',
-        props: { projectId: null },
+        props: { projectUuid: null },
         component: ShowTareas,
         meta: { title: 'Mis Tareas - BTaskora ' },
       },
       {
-        path: 'projects/:projectId/tasks',
+        path: 'projects/:projectUuid/tasks',
         name: 'ProjectTasks',
         component: ShowTareas,
         props: (route: RouteLocationNormalized) => ({
-          projectId: parseInt(route.params.projectId as string, 10),
+          projectUuid: route.params.projectUuid as string,
         }),
       },
       {

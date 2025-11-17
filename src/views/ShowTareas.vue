@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Importa los composables y stores necesarios
-import { computed, ref, toRef } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import { useProjectStore, type Project } from '@/stores/projects'
 import { useRealtimeItems } from '@/composables/useRealtimeItems'
 import { useItemFilters } from '@/composables/useItemFilters'
@@ -11,31 +11,40 @@ import type { Item } from '@/data/DataTypes'
 import BaseModal from '@/components/common/BaseModal.vue'
 import EditTaskForm from '@/components/EditTaskForm.vue'
 
+const props = defineProps<{
+  projectUuid: string | null
+}>()
+
 const projectStore = useProjectStore()
+
+// 2. Sincroniza el store con la prop de la URL
+watchEffect(() => {
+  projectStore.setCurrentProjectUuid(props.projectUuid)
+})
+
+// 3. Crea una 'computed' que obtenga el ID NUMÉRICO del proyecto activo
+const activeProjectId = computed(() => projectStore.activeProject?.id ?? null)
 const showAddTaskModal = ref(false)
 const showEditModal = ref(false)
 const itemToEdit = ref<Item | null>(null)
 
-const props = defineProps<{
-  projectId: number | null // Recibe null de la ruta 'PersonalTasks' o number de 'ProjectTasks'
-}>()
 const requestEditItem = (item: Item) => {
   itemToEdit.value = item // Guarda el item completo
   showEditModal.value = true
 }
-const reactiveProjectId = toRef(props, 'projectId')
+//const reactiveprojectUuid = toRef(props, 'projectUuid')
 
 // --- USA LOS COMPOSABLES ---
 // 1. Obtiene la lista reactiva de items y el estado de carga
-const { items: allItems, isLoading } = useRealtimeItems(reactiveProjectId)
+const { items: allItems, isLoading } = useRealtimeItems(activeProjectId)
 // 2. Obtiene los filtros y la lista filtrada, pasándole la lista del primer composable
 const { activeTag, completionFilter, setCompletionFilter, handleTagClick, filteredItems } =
   useItemFilters(allItems)
 
 const pageTitle = computed(() => {
-  if (props.projectId === null) return 'Mis Tareas'
+  if (props.projectUuid === null) return 'Mis Tareas'
   // 👇 No uses .value aquí y añade el tipo para 'p' 👇
-  const project = projectStore.projectList.find((p: Project) => p.id === props.projectId)
+  const project = projectStore.projectList.find((p: Project) => p.uuid === props.projectUuid)
   return project?.nombre || 'Proyecto'
 })
 
@@ -50,7 +59,7 @@ const handleTareaAgregada = async (newItemData: {
     await apiClient.post('/items', {
       ...newItemData,
       tipo: 'task',
-      proyecto_id: props.projectId,
+      proyecto_id: props.projectUuid,
     })
     // Rely on socket event 'item_created' to update the list
     showAddTaskModal.value = false

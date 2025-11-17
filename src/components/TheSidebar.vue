@@ -108,7 +108,7 @@ const handleConfirmCreateProject = async () => {
         <ul v-else-if="projectStore.projectList.length > 0">
           <li v-for="project in projectStore.projectList" :key="project.id">
             <RouterLink
-              :to="{ name: 'ProjectTasks', params: { projectId: project.id } }"
+              :to="{ name: 'ProjectTasks', params: { projectUuid: project.uuid } }"
               class="sidebar-item project-item"
             >
               <span>#</span>

@@ -6,11 +6,11 @@ let connectionPromise: Promise<Socket> | null = null
 
 export const getSocket = () => socket
 
-export const leaveProjectRoom = (projectId: number) => {
+export const leaveProjectRoom = (projectUuid: number) => {
   if (socket?.connected) {
-    const room = `project_${projectId}`
+    const room = `project_${projectUuid}`
     console.log(`Emitting leave_project for room: ${room}`)
-    socket.emit('leave_project', projectId) // Send event to backend
+    socket.emit('leave_project', projectUuid) // Send event to backend
     // Optional: socket.leave(room) on client-side too, though backend handles primary logic
   } else {
     console.warn('Socket not connected, cannot leave room.')
@@ -73,13 +73,13 @@ export const disconnectSocket = () => {
   }
 }
 
-export const joinProjectRoom = async (projectId: number) => {
+export const joinProjectRoom = async (projectUuid: number) => {
   try {
     // Wait for connection if not already connected
     const currentSocket = socket?.connected ? socket : await connectSocket()
     if (currentSocket?.connected) {
-      console.log(`Emitting join_project for project ID: ${projectId}`)
-      currentSocket.emit('join_project', projectId)
+      console.log(`Emitting join_project for project ID: ${projectUuid}`)
+      currentSocket.emit('join_project', projectUuid)
     } else {
       console.error('Failed to connect socket before joining room.')
     }
