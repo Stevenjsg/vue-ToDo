@@ -16,26 +16,36 @@ const routes = [
     path: '/',
     name: 'Landing',
     component: LandingPage,
-    meta: { guest: true },
+    meta: {
+      guest: true,
+      title: 'BTaskora  - Organiza tu caos',
+    },
   },
   {
     path: '/auth',
     name: 'Auth',
     component: AuthView,
-    meta: { guest: true },
+    meta: {
+      guest: true,
+      title: 'Iniciar Sesión - BTaskora ',
+    },
   },
 
   // --- Rutas de App (con sidebar) ---
   {
     path: '/app', // Un prefijo común (opcional pero recomendado)
     component: AppLayout, // 👈 El layout principal
-    meta: { requiresAuth: true }, // 👈 Protege todas las rutas hijas
+    meta: {
+      requiresAuth: true,
+      title: 'BTaskora  - Panel de Control',
+    }, // 👈 Protege todas las rutas hijas
     children: [
       {
         path: 'tareas/personales', // Se resuelve como /app/tareas
         name: 'PersonalTasks',
         props: { projectId: null },
         component: ShowTareas,
+        meta: { title: 'Mis Tareas - BTaskora ' },
       },
       {
         path: 'projects/:projectId/tasks',
@@ -49,11 +59,13 @@ const routes = [
         path: 'perfil', // Se resuelve como /app/perfil
         name: 'Perfil',
         component: UserProfile,
+        meta: { title: 'Perfil - BTaskora ' },
       },
       {
         path: 'pomodoro', // Se resuelve como /app/pomodoro
         name: 'Pomodoro',
         component: PomodoroView,
+        meta: { title: 'Pomodoro - BTaskora ' },
       },
     ],
   },
@@ -71,6 +83,8 @@ router.beforeEach(async (to, _from) => {
   const isAuth = authStore.isAuthenticated
   const requiresAuth = to.meta.requiresAuth
   const isGuestRoute = to.meta.guest
+
+  document.title = (to.meta.title as string) || 'DEFAULT_TITLE'
 
   if (requiresAuth && !isAuth) {
     return { name: 'Auth' }

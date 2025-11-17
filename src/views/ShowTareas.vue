@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Importa los composables y stores necesarios
-import { computed, defineProps, ref, toRef } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { useProjectStore, type Project } from '@/stores/projects'
 import { useRealtimeItems } from '@/composables/useRealtimeItems'
 import { useItemFilters } from '@/composables/useItemFilters'

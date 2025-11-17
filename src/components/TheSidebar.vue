@@ -68,7 +68,7 @@ const handleConfirmCreateProject = async () => {
 <template>
   <aside class="sidebar" :class="{ 'is-open': isVisible }">
     <header class="header">
-      <div class="logo"><a href="/">MiApp</a></div>
+      <div class="logo"><a href="/">BTaskora </a></div>
     </header>
     <nav class="navigation">
       <ul>
@@ -207,6 +207,7 @@ const handleConfirmCreateProject = async () => {
   margin: 0;
 }
 .footer {
+  background-color: var(--color-surface-secondary);
   margin-top: auto;
   padding-top: 1rem;
 
