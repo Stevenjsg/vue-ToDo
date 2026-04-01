@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted, watch } from 'vue' // Add watch
 import apiClient from '@services/api'
-import type { tipo_sesion_pomodoro_enum } from '@data/DataTypes'
-import apiClient from '@/services/api'
 import type { tipo_sesion_pomodoro_enum } from '@/data/DataTypes'
 import IconPlay from '@/assets/icon/IconPlay.vue'
 import IconRepeat from '@/assets/icon/IconRepeat.vue'

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import PomodoroTimer from '@components/PomodoroTimer.vue' // Asumiendo la ruta
-import PomodoroTimer from '@/components/PomodoroTimer.vue' // Asumiendo la ruta
 import IconSettings from '@/assets/icon/IconSettings.vue'
 
 // --- Estado y Datos ---

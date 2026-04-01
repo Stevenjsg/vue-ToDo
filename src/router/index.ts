@@ -32,9 +32,6 @@ const routes = [
   {
     path: '/app',
     component: AppLayout,
-    meta: { requiresAuth: true },
-    path: '/app', // Un prefijo común (opcional pero recomendado)
-    component: AppLayout, // 👈 El layout principal
     meta: {
       requiresAuth: true,
       title: 'BTaskora  - Panel de Control',
