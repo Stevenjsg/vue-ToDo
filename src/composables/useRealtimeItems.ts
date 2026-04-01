@@ -12,24 +12,22 @@ export function useRealtimeItems(projectId: Ref<number | null>) {
   const authStore = useAuthStore()
   let socket: Socket | null = null
 
-  // --- Fetch Data ---
   const fetchItems = async () => {
-    // Solo busca si hay un proyecto seleccionado O si queremos items personales (projectId es null)
     try {
       isLoading.value = true
+      // 👇 Usa la variable con el nombre corregido
       console.log(`Fetching items for project ID: ${projectId.value}`)
       const response = await apiClient.get('/items', {
         params: {
-          tipo: 'task', // Asumiendo que siempre son tareas en este contexto
-          proyectoId: projectId.value, // Usa el ID reactivo
+          tipo: 'task',
+          proyectoId: projectId.value, // Envía el ID numérico (o null)
         },
       })
       items.value = response.data
-      console.log(`FETCH: items.value DESPUÉS de asignar (${projectId.value}):`, [...items.value]) // Copia para ver estado
+      console.log(`FETCH: items.value DESPUÉS de asignar (${projectId.value}):`, [...items.value])
     } catch (error: unknown) {
       console.error('Error fetching items:', error)
       items.value = []
-      // Considerar manejo de errores (ej. logout en 401)
     } finally {
       isLoading.value = false
     }
@@ -116,6 +114,7 @@ export function useRealtimeItems(projectId: Ref<number | null>) {
   watch(
     projectId,
     async (newProjectId, oldProjectId) => {
+      // Nombres corregidos
       console.log(`useRealtimeItems: Project ID changed from ${oldProjectId} to ${newProjectId}`)
       await fetchItems() // Recarga items
 

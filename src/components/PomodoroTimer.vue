@@ -2,6 +2,12 @@
 import { ref, computed, onUnmounted, watch } from 'vue' // Add watch
 import apiClient from '@services/api'
 import type { tipo_sesion_pomodoro_enum } from '@data/DataTypes'
+import apiClient from '@/services/api'
+import type { tipo_sesion_pomodoro_enum } from '@/data/DataTypes'
+import IconPlay from '@/assets/icon/IconPlay.vue'
+import IconRepeat from '@/assets/icon/IconRepeat.vue'
+import IconSkip from '@/assets/icon/IconSkip.vue'
+import IconPause from '@/assets/icon/IconPause.vue'
 
 // --- Define Props with Defaults ---
 const props = withDefaults(
@@ -127,6 +133,25 @@ const formattedTime = computed(() => {
   const seconds = timeLeft.value % 60
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 })
+
+// --- Propiedades Computadas para el SVG ---
+const totalDuration = computed(() => {
+  // Duración total de la sesión actual en segundos
+  if (currentSessionType.value === 'trabajo') return props.workMinutes * 60
+  if (currentSessionType.value === 'descanso_corto') return props.shortBreakMinutes * 60
+  if (currentSessionType.value === 'descanso_largo') return props.longBreakMinutes * 60
+  return props.workMinutes * 60 // Fallback
+})
+
+// --- Lógica del Círculo SVG ---
+const radius = 90 // Radio del círculo
+const circumference = 2 * Math.PI * radius // Circunferencia
+
+const progressOffset = computed(() => {
+  const percentageLeft = timeLeft.value / totalDuration.value
+  return circumference * (1 - percentageLeft)
+})
+
 // --- Limpieza al desmontar (no changes needed) ---
 onUnmounted(() => {
   pauseTimer() // Limpia el intervalo si el componente se destruye
@@ -135,71 +160,119 @@ onUnmounted(() => {
 
 <template>
   <div class="pomodoro-timer">
-    <div class="timer-display">
-      <span>{{ formattedTime }}</span>
-      <small>{{ currentSessionType }}</small>
+    <div class="visual-timer">
+      <svg class="timer-svg" viewBox="0 0 200 200">
+        <circle class="timer-track" :r="radius" cx="100" cy="100" />
+        <circle
+          class="timer-progress"
+          :r="radius"
+          cx="100"
+          cy="100"
+          :style="{
+            strokeDasharray: circumference,
+            strokeDashoffset: progressOffset,
+          }"
+        />
+      </svg>
+      <div class="timer-display">
+        <span>{{ formattedTime }}</span>
+        <small>{{ currentSessionType }}</small>
+      </div>
     </div>
+
     <div class="timer-controls">
-      <button v-if="timerState !== 'running'" @click="startTimer">▶️ Iniciar</button>
-      <button v-if="timerState === 'running'" @click="pauseTimer">⏸️ Pausar</button>
-      <button @click="resetTimer">🔄 Resetear</button>
-      <button @click="skipSession">⏭️ Saltar</button>
+      <button class="btn-timer" v-if="timerState !== 'running'" @click="startTimer">
+        <IconPlay />
+      </button>
+      <button class="btn-timer" v-if="timerState === 'running'" @click="pauseTimer">
+        <IconPause />
+      </button>
+      <button class="btn-timer" @click="resetTimer">
+        <IconRepeat />
+      </button>
+      <button class="btn-timer" @click="skipSession">
+        <IconSkip />
+      </button>
     </div>
   </div>
 </template>
 
 <style scoped>
+.btn-timer {
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.btn-timer:hover {
+  background-color: var(--color-accent-hover);
+}
 .pomodoro-timer {
-  background-color: var(--color-surface);
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
 }
 
+/* --- Círculo Visual --- */
+.visual-timer {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  margin: 1rem 0;
+}
+
+.timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg); /* Inicia el progreso desde arriba */
+}
+
+.timer-track,
+.timer-progress {
+  fill: none;
+  stroke-width: 10;
+}
+
+.timer-track {
+  stroke: var(--color-border); /* Color del fondo del círculo */
+}
+
+.timer-progress {
+  stroke: var(--color-accent); /* Color del progreso */
+  transition: stroke-dashoffset 0.5s linear;
+}
+
+/* --- Texto del Temporizador (Centrado) --- */
 .timer-display {
-  font-size: 3rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.timer-display span {
+  font-size: 3.5rem;
   font-weight: bold;
   color: var(--color-text-primary);
-  text-align: center;
+  line-height: 1;
 }
 .timer-display small {
   display: block;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: normal;
   color: var(--color-text-secondary);
   text-transform: capitalize;
 }
 
+/* --- Controles (sin cambios) --- */
 .timer-controls {
   display: flex;
   gap: 0.75rem;
 }
-
-.timer-controls button {
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.timer-controls button:hover {
-  background-color: var(--color-border);
-}
-
-/* Estilo específico para el botón de Iniciar/Reanudar */
-.timer-controls button:first-child {
-  background-color: var(--color-accent);
-  color: white;
-  border-color: var(--color-accent);
-}
-.timer-controls button:first-child:hover {
-  background-color: var(--color-accent-hover);
-}
+/* ... (pega tus estilos de botones aquí) ... */
 </style>

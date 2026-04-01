@@ -19,8 +19,8 @@ const onAuthSuccess = () => {
 </script>
 
 <template>
+  <RouterLink to="/" class="back-link">← Volver a Inicio</RouterLink>
   <div class="auth-container">
-    <a href="/">Inicio</a>
     <div class="auth-card">
       <div class="auth-toggle">
         <button :class="{ active: activeComponentName === 'Login' }" @click="setView('Login')">
@@ -42,6 +42,14 @@ const onAuthSuccess = () => {
 </template>
 
 <style scoped>
+.back-link {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+}
 /* ==========================================================================
    Base Styles (Mobile First)
    ========================================================================== */

@@ -1,10 +1,17 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+<<<<<<< HEAD
 import apiClient from '@services/api'
+=======
+import apiClient from '@/services/api'
+// No importamos 'router' aquí para mantener el store desacoplado.
+// La navegación debe manejarse en los componentes (ej. en TheSidebar)
+>>>>>>> c5c5b96ab803be15a5e22af0f09e8200b040d8cd
 
-// Define la interfaz completa para un Proyecto (ajústala si es necesario)
+// 1. Interfaz actualizada para incluir 'uuid'
 export interface Project {
   id: number
+  uuid: string // <-- AÑADIDO
   owner_id: number
   nombre: string
   descripcion: string | null
@@ -16,80 +23,76 @@ export const useProjectStore = defineStore('projects', () => {
   // --- STATE ---
   const projects = ref<Project[]>([])
   const isLoading = ref(false)
-  // Intenta cargar el ID del proyecto activo desde localStorage al iniciar
-  const currentProjectId = ref<number | null>(
+
+  // 2. Renombrado a 'Uuid' y ahora es un string
+  const currentProjectUuid = ref<string | null>(
     (() => {
-      const savedId = localStorage.getItem('activeProjectId')
-      // Asegúrate de manejar NaN si parseInt falla
-      const parsedId = savedId ? parseInt(savedId, 10) : NaN
-      return !isNaN(parsedId) ? parsedId : null
+      // 3. Lee el Uuid de localStorage
+      const savedUuid = localStorage.getItem('activeProjectUuid')
+      return savedUuid || null // Simplemente guarda el string o null
     })(),
-  ) // <-- Ejecuta la función inmediatamente
+  )
 
   // --- GETTERS ---
   const projectList = computed(() => projects.value)
-  const activeProject = computed(() => projects.value.find((p) => p.id === currentProjectId.value))
+
+  // 4. El getter ahora busca por 'uuid'
+  const activeProject = computed(() =>
+    projects.value.find((p) => p.uuid === currentProjectUuid.value),
+  )
 
   // --- ACTIONS ---
 
-  /**
-   * Obtiene los proyectos del usuario desde la API.
-   */
   const fetchProjects = async () => {
     isLoading.value = true
     try {
-      const response = await apiClient.get<Project[]>('/projects') // Especifica el tipo esperado
+      const response = await apiClient.get<Project[]>('/projects')
       projects.value = response.data
 
-      // Valida que el currentProjectId siga siendo válido
-      if (currentProjectId.value && !projects.value.some((p) => p.id === currentProjectId.value)) {
-        setCurrentProject(null) // Si el proyecto activo ya no existe, deselecciónalo
-      }
-      // Si no hay proyecto activo y hay proyectos, selecciona el primero (o ninguno)
-      else if (currentProjectId.value === null && projects.value.length > 0) {
-        // Podrías seleccionar el primero por defecto: setCurrentProject(projects.value[0].id);
-        // O dejarlo en null para forzar selección
+      // 5. Valida que el 'uuid' guardado siga siendo válido
+      if (
+        currentProjectUuid.value &&
+        !projects.value.some((p) => p.uuid === currentProjectUuid.value)
+      ) {
+        setCurrentProjectUuid(null) // Deselecciona si ya no existe
       }
     } catch (error) {
       console.error('Error fetching projects:', error)
-      projects.value = [] // Limpia en caso de error
-      setCurrentProject(null) // Asegura deseleccionar si falla
+      projects.value = []
+      setCurrentProjectUuid(null)
     } finally {
       isLoading.value = false
     }
   }
 
   /**
-   * Establece el proyecto activo y lo guarda en localStorage.
+   * Establece el proyecto activo (por UUID) y lo guarda en localStorage.
    */
-  const setCurrentProject = (id: number | null) => {
-    currentProjectId.value = id
-    if (id !== null) {
-      localStorage.setItem('activeProjectId', String(id))
+  const setCurrentProjectUuid = (uuid: string | null) => {
+    currentProjectUuid.value = uuid
+    if (uuid) {
+      localStorage.setItem('activeProjectUuid', uuid)
     } else {
-      localStorage.removeItem('activeProjectId')
+      localStorage.removeItem('activeProjectUuid')
     }
-    // Opcional: Navegar a la vista de tareas asociada
-    // if (id !== null) {
-    //    router.push(`/app/tareas`); // O una ruta específica del proyecto si la tienes
-    // } else {
-    //    router.push(`/app/tareas`); // Ruta para tareas personales
-    // }
+    // La navegación (router.push) debe hacerse en el componente que llama a esto
+    // (ej. TheSidebar.vue) porque la ruta y el estado deben estar sincronizados.
   }
 
   /**
    * Crea un nuevo proyecto llamando a la API y actualiza el estado local.
    */
   const createProject = async (name: string, description?: string): Promise<Project> => {
-    // No usamos try/catch aquí para que el componente que llama maneje el error
     const response = await apiClient.post<Project>('/projects', { nombre: name, description })
-    projects.value.push(response.data) // Añade el nuevo proyecto a la lista
-    setCurrentProject(response.data.id) // Hacerlo el proyecto activo
-    return response.data // Devuelve el proyecto creado
+    projects.value.push(response.data)
+
+    // 7. Al crear, establece el nuevo 'uuid' como activo
+    setCurrentProjectUuid(response.data.uuid)
+    return response.data
   }
 
   /**
-   * Actualiza un proyecto localmente en el store (después de una llamada API exitosa).
+   * Actualiza un proyecto localmente en el store (basado en 'id' numérico).
    */
   const updateProjectLocally = (updatedProject: Project) => {
     const index = projects.value.findIndex((p) => p.id === updatedProject.id)
@@ -99,13 +102,18 @@ export const useProjectStore = defineStore('projects', () => {
   }
 
   /**
-   * Elimina un proyecto localmente del store (después de una llamada API exitosa).
+   * Elimina un proyecto localmente del store (basado en 'id' numérico).
    */
-  const removeProjectLocally = (projectId: number) => {
-    projects.value = projects.value.filter((p) => p.id !== projectId)
-    // Si el proyecto eliminado era el activo, deselecciónalo
-    if (currentProjectId.value === projectId) {
-      setCurrentProject(null)
+  const removeProjectLocally = (projectUuid: number) => {
+    // 8. Lógica de deselección actualizada
+    // Encuentra el proyecto que se va a borrar ANTES de filtrar la lista
+    const projectToRemove = projects.value.find((p) => p.id === projectUuid)
+
+    projects.value = projects.value.filter((p) => p.id !== projectUuid)
+
+    // Si el proyecto eliminado era el activo (compara UUIDs), deselecciónalo
+    if (projectToRemove && currentProjectUuid.value === projectToRemove.uuid) {
+      setCurrentProjectUuid(null)
     }
   }
 
@@ -113,13 +121,13 @@ export const useProjectStore = defineStore('projects', () => {
     // State
     projects,
     isLoading,
-    currentProjectId,
+    currentProjectUuid, // <-- Renombrado
     // Getters
     projectList,
     activeProject,
     // Actions
     fetchProjects,
-    setCurrentProject,
+    setCurrentProjectUuid, // <-- Renombrado
     createProject,
     updateProjectLocally,
     removeProjectLocally,

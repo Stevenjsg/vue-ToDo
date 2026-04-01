@@ -33,10 +33,10 @@ const handleRegister = async () => {
 }
 </script>
 <template>
-  <form @submit.prevent="handleRegister" class="auth-form">
+  <form id="register" @submit.prevent="handleRegister" class="auth-form">
     <h2>Crear Cuenta</h2>
-    <input v-model="email" type="email" placeholder="Email" required />
-    <input v-model="password" type="password" placeholder="Contraseña" required />
+    <input name="REemail" v-model="email" type="email" placeholder="Email" required />
+    <input name="REpassword" v-model="password" type="password" placeholder="Contraseña" required />
     <button type="submit">Registrarse</button>
     <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
   </form>

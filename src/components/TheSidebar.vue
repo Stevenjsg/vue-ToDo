@@ -68,7 +68,7 @@ const handleConfirmCreateProject = async () => {
 <template>
   <aside class="sidebar" :class="{ 'is-open': isVisible }">
     <header class="header">
-      <div class="logo"><a href="/">MiApp</a></div>
+      <div class="logo"><a href="/">BTaskora </a></div>
     </header>
     <nav class="navigation">
       <ul>
@@ -114,7 +114,7 @@ const handleConfirmCreateProject = async () => {
         <ul v-else-if="projectStore.projectList.length > 0">
           <li v-for="project in projectStore.projectList" :key="project.id">
             <RouterLink
-              :to="{ name: 'ProjectTasks', params: { projectId: project.id } }"
+              :to="{ name: 'ProjectTasks', params: { projectUuid: project.uuid } }"
               class="sidebar-item project-item"
             >
               <span>#</span>
@@ -213,6 +213,7 @@ const handleConfirmCreateProject = async () => {
   margin: 0;
 }
 .footer {
+  background-color: var(--color-surface-secondary);
   margin-top: auto;
   padding-top: 1rem;
 

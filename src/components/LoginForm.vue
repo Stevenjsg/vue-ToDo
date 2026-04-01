@@ -21,10 +21,10 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <form @submit.prevent="handleLogin" class="auth-form">
+  <form id="login" @submit.prevent="handleLogin" class="auth-form">
     <h2>Iniciar Sesión</h2>
-    <input v-model="email" type="email" placeholder="Email" required />
-    <input v-model="password" type="password" placeholder="Contraseña" required />
+    <input name="LOemail" v-model="email" type="email" placeholder="Email" required />
+    <input name="LOpassword" v-model="password" type="password" placeholder="Contraseña" required />
     <button type="submit">Entrar</button>
     <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
   </form>

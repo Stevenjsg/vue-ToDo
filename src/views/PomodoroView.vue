@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import PomodoroTimer from '@components/PomodoroTimer.vue' // Asumiendo la ruta
+import PomodoroTimer from '@/components/PomodoroTimer.vue' // Asumiendo la ruta
+import IconSettings from '@/assets/icon/IconSettings.vue'
 
 // --- Estado y Datos ---
+const showConfig = ref(false)
 const workDuration = ref(25)
 const shortBreakDuration = ref(5)
 const longBreakDuration = ref(15)
@@ -70,46 +73,78 @@ applyPreset()
 
 <template>
   <div class="pomodoro-view">
-    <h1>Configuración de Pomodoro</h1>
-
-    <div class="config-section">
-      <label>Seleccionar Preset:</label>
-      <select v-model="selectedPresetName" @change="applyPreset">
-        <option v-for="p in presets" :key="p.name" :value="p.name">{{ p.name }}</option>
-      </select>
-
-      <div class="duration-inputs">
-        <label>Trabajo: <input type="number" v-model.number="workDuration" min="1" /> min</label>
-        <label
-          >Descanso Corto:
-          <input type="number" v-model.number="shortBreakDuration" min="1" /> min</label
-        >
-        <label
-          >Descanso Largo:
-          <input type="number" v-model.number="longBreakDuration" min="1" /> min</label
-        >
-        <label
-          >Sesiones para D. Largo:
-          <input type="number" v-model.number="sessionsBeforeLongBreak" min="1" />
-        </label>
-      </div>
-
-      <div class="save-preset">
-        <input type="text" v-model="newPresetName" placeholder="Nombre del nuevo preset" />
-        <button @click="savePreset">Guardar Preset Actual</button>
-      </div>
+    <div class="timer-container">
+      <PomodoroTimer
+        :work-minutes="workDuration"
+        :short-break-minutes="shortBreakDuration"
+        :long-break-minutes="longBreakDuration"
+        :sessions-before-long-break="sessionsBeforeLongBreak"
+      />
     </div>
 
-    <PomodoroTimer
-      :work-minutes="workDuration"
-      :short-break-minutes="shortBreakDuration"
-      :long-break-minutes="longBreakDuration"
-      :sessions-before-long-break="sessionsBeforeLongBreak"
-    />
+    <div class="config-wrapper">
+      <div class="config-header">
+        <select v-model="selectedPresetName" @change="applyPreset" class="preset-select">
+          <option v-for="p in presets" :key="p.name" :value="p.name">{{ p.name }}</option>
+        </select>
+        <button @click="showConfig = !showConfig" class="settings-btn" title="Ajustes">
+          <IconSettings />
+        </button>
+      </div>
+
+      <Transition name="slide-fade">
+        <div v-if="showConfig" class="config-details">
+          <div class="duration-inputs">
+            <label
+              >Trabajo: <input type="number" v-model.number="workDuration" min="1" /> min</label
+            >
+            <label
+              >Desc. Corto:
+              <input type="number" v-model.number="shortBreakDuration" min="1" /> min</label
+            >
+            <label
+              >Desc. Largo:
+              <input type="number" v-model.number="longBreakDuration" min="1" /> min</label
+            >
+            <label
+              >Sesiones: <input type="number" v-model.number="sessionsBeforeLongBreak" min="1"
+            /></label>
+          </div>
+          <div class="save-preset">
+            <input type="text" v-model="newPresetName" placeholder="Nombre del nuevo preset" />
+            <button @click="savePreset">Guardar Preset</button>
+          </div>
+        </div>
+      </Transition>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  gap: 1rem; /* Añade espacio entre el select y el botón */
+}
+
+.preset-select {
+  flex-grow: 1; /* 1. Hace que el select ocupe el espacio disponible */
+
+  /* Tus estilos existentes */
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  border-radius: 6px;
+  font-size: 1rem;
+
+  /* Evita que el texto se desborde si es muy largo */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .pomodoro-view {
   max-width: 900px; /* Ancho máximo para el contenido */
   margin: 2rem auto; /* Centrado */
@@ -155,7 +190,24 @@ h1 {
   flex-direction: column; /* Apilado en móvil */
   gap: 0.5rem;
 }
+.settings-btn {
+  flex-shrink: 0; /* 2. Evita que el botón se encoja */
 
+  /* Tus estilos existentes */
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex; /* Ayuda a centrar el icono ⚙️ */
+  align-items: center;
+  justify-content: center;
+}
+.settings-btn:hover {
+  background-color: var(--color-border);
+}
 label {
   display: flex;
   flex-direction: column; /* Etiqueta encima del input en móvil */
@@ -195,34 +247,63 @@ button {
 
 /* --- Media Query para Escritorio --- */
 @media (min-width: 768px) {
-  .config-section {
+  .pomodoro-view {
+    max-width: 600px; /* Centra el contenido */
+    margin: 2rem auto;
+    padding: 1rem;
+  }
+
+  .timer-container {
+    background-color: var(--color-surface);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
     padding: 2rem;
+    margin-bottom: 2rem;
   }
 
-  .preset-selector {
-    flex-direction: row; /* Lado a lado en escritorio */
+  /* --- Sección de Configuración --- */
+  .config-wrapper {
+    background-color: var(--color-surface);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+  }
+
+  .config-header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-  }
-  .preset-selector label {
-    flex-direction: row; /* Etiqueta al lado del select */
-    width: auto; /* Ancho automático */
-  }
-  .preset-selector select {
-    width: auto; /* Ancho automático */
-    min-width: 200px;
+    padding: 1rem 1.5rem;
   }
 
-  .duration-inputs {
-    grid-template-columns: repeat(4, 1fr); /* 4 columnas en escritorio */
-  }
-  .duration-inputs label {
-    flex-direction: row; /* Etiqueta al lado del input */
-    align-items: center;
-  }
-  .duration-inputs input {
-    width: 60px; /* Ancho fijo para números */
+  .preset-select {
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    border-radius: 6px;
+    font-size: 1rem;
   }
 
+  .settings-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+  }
+  .settings-btn:hover {
+    background-color: var(--color-border);
+  }
+
+  .config-details {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
   .save-preset {
     flex-direction: row; /* Lado a lado en escritorio */
     align-items: center;
@@ -234,7 +315,18 @@ button {
     width: auto; /* Ancho automático */
   }
 }
-
+/* --- Animación para mostrar/ocultar configuración --- */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s ease-out;
+  max-height: 200px; /* Altura máxima aproximada */
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+}
 /* --- Contenedor del Pomodoro Timer --- */
 /* (El componente PomodoroTimer ya tiene sus propios estilos internos) */
 .pomodoro-timer-container {

@@ -1,147 +1,22 @@
 <script setup lang="ts">
-import TheNavBar from '@/components/common/TheNavBar.vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-
-const goToAuth = () => {
-  router.push('/auth')
-}
+defineEmits(['navigateToAuth'])
 </script>
 
 <template>
   <div class="landing-page">
-    <TheNavBar @navigateToAuth="goToAuth" />
-    <section class="hero-section">
-      <div class="container hero-content">
-        <h1>Organiza tu caos.</h1>
-        <p class="subtitulo">
-          Deja de saltar entre cinco apps distintas. Tu centro de productividad personal por fin
-          unifica tareas, recordatorios recurrentes, notas y un temporizador de foco. Sincronizado
-          en todos tus dispositivos.
-        </p>
-        <button class="btn-primary cta-hero" @click="goToAuth">Empieza Gratis - Sin tarjeta</button>
-
-        <div class="hero-visual">
-          <img src="#" alt="Vista previa de la app" />
-        </div>
-      </div>
-    </section>
-
-    <section id="features" class="features-section">
+    <header class="main-nav">
       <div class="container">
-        <div class="feature-grid">
-          <div class="feature-card">
-            <span>🔔</span>
-            <h3>Recordatorios Inteligentes</h3>
-            <p>
-              Desde tomar una pastilla cada 8 horas hasta regar las plantas. Nuestro sistema nativo
-              en Kotlin asegura que nunca olvides una tarea recurrente.
-            </p>
-          </div>
-          <div class="feature-card">
-            <span>✅</span>
-            <h3>Tareas con Superpoderes</h3>
-            <p>
-              Asigna prioridades, filtra por etiquetas (tags), añade subtareas y ve todo en un
-              dashboard claro. El control total de tus proyectos.
-            </p>
-          </div>
-          <div class="feature-card">
-            <span>🍅</span>
-            <h3>Foco y Notas Integrados</h3>
-            <p>
-              Toma notas mientras trabajas y mide tu productividad con el temporizador Pomodoro
-              integrado. Tu espacio de trabajo y tu gestor de tareas viven juntos.
-            </p>
-          </div>
+        <div class="logo"><RouterLink to="/">BTaskora </RouterLink></div>
+        <nav>
+          <a href="#features">Características</a>
+          <a href="#pricing">Precios</a>
+        </nav>
+        <div class="nav-buttons">
+          <button class="btn-secondary" @click="$emit('navigateToAuth')">Iniciar Sesión</button>
+          <button class="btn-primary" @click="$emit('navigateToAuth')">Regístrate Gratis</button>
         </div>
       </div>
-    </section>
-
-    <section class="sync-section">
-      <div class="container sync-content">
-        <div class="sync-visual">
-          <img src="/src/assets/logo.svg" alt="Logo de Vue" class="sync-logo" />
-          <img src="/src/assets/kotlin.svg" alt="Logo de Kotlin" class="sync-logo" />
-        </div>
-        <div class="sync-text">
-          <h2>Sincronizado. Siempre. En todas partes.</h2>
-          <p>
-            Nuestra arquitectura única te ofrece lo mejor de dos mundos: la potencia de una
-            <strong>aplicación web (Vue)</strong> en tu escritorio y la fiabilidad de una
-            <strong>aplicación nativa (Kotlin)</strong> en tu móvil.
-          </p>
-          <p>
-            Añade una tarea en tu PC y se reflejará al instante en tu teléfono. Sin fricción, solo
-            flujo.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <section id="pricing" class="pricing-section">
-      <div class="container">
-        <h2>Un plan para cada necesidad</h2>
-        <div class="pricing-grid">
-          <div class="pricing-tier">
-            <h3>Personal</h3>
-            <h2>Gratis</h2>
-            <p>Para organizar tu vida diaria.</p>
-            <ul>
-              <li>Tareas Ilimitadas</li>
-              <li>Notas Ilimitadas</li>
-              <li>Sincronización Web y Móvil</li>
-              <li>1 Proyecto</li>
-            </ul>
-            <button class="btn-secondary" @click="goToAuth">Empieza Gratis</button>
-          </div>
-
-          <div class="pricing-tier popular">
-            <span class="badge">Más Popular</span>
-            <h3>Pro</h3>
-            <h2>4.99€ <small>/ mes</small></h2>
-            <p>Para profesionales y "power-users".</p>
-            <ul>
-              <li>Todo lo del plan Personal, y además:</li>
-              <li><strong>Proyectos Ilimitados</strong></li>
-              <li><strong>Recordatorios Recurrentes Avanzados</strong></li>
-              <li><strong>Etiquetas (Tags) y Filtros</strong></li>
-              <li>Vista de Calendario (Próximamente)</li>
-            </ul>
-            <button class="btn-primary" @click="goToAuth">Prueba Pro 7 días gratis</button>
-          </div>
-
-          <div class="pricing-tier">
-            <h3>Teams</h3>
-            <h2>8.99€ <small>/u/mes</small></h2>
-            <p>Para colaborar con tu equipo.</p>
-            <ul>
-              <li>Todo lo del plan Pro, y además:</li>
-              <li><strong>Proyectos Colaborativos</strong></li>
-              <li>Asignación de Tareas</li>
-              <li>Dashboard de Equipo</li>
-              <li>Integración con Slack (Próximamente)</li>
-            </ul>
-            <button class="btn-secondary" @click="goToAuth">Contactar con Ventas</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="final-cta-section">
-      <div class="container">
-        <h2>¿Listo para dejar atrás el caos?</h2>
-        <p>Crea tu cuenta gratuita en 30 segundos. Recupera tu foco hoy mismo.</p>
-        <button class="btn-primary cta-hero" @click="goToAuth">Regístrate Gratis</button>
-      </div>
-    </section>
-
-    <footer class="main-footer">
-      <div class="container">
-        <p>© {{ new Date().getFullYear() }} BTaskora . Todos los derechos reservados.</p>
-      </div>
-    </footer>
+    </header>
   </div>
 </template>
 
@@ -340,9 +215,7 @@ section {
   border: 1px solid var(--color-border);
 }
 .sync-logo {
-  height: 80px;
-  width: auto;
-  display: block;
+  max-width: 100px;
 }
 
 .sync-text h2 {
