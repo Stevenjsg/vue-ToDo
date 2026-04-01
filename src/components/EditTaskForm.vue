@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import type { Item } from '@/data/DataTypes'
+import type { Item } from '@data/DataTypes'
 
 // Recibe el item a editar como prop
 const props = defineProps<{

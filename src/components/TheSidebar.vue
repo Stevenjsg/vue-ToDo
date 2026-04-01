@@ -1,14 +1,14 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useProjectStore } from '@/stores/projects'
+import { useAuthStore } from '@stores/auth'
+import { useProjectStore } from '@stores/projects'
 import IconTask from '@/assets/icon/IconTask.vue'
 import IconUser from '@/assets/icon/IconUser.vue'
 import IconLogout from '@/assets/icon/IconLogout.vue'
 import IconLogin from '@/assets/icon/IconLogin.vue'
 import IconPlus from '@/assets/icon/IconPlus.vue'
-import { onMounted, ref } from 'vue'
-import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
+import ConfirmationModal from '@common/ConfirmationModal.vue'
 
 const { isVisible } = defineProps<{
   isVisible: boolean
@@ -86,6 +86,12 @@ const handleConfirmCreateProject = async () => {
           <RouterLink to="/app/pomodoro" class="sidebar-item" @click="emit('close')">
             <span>🍅</span>
             <span class="item-text">Pomodoro </span>
+          </RouterLink>
+        </li>
+        <li>
+          <RouterLink to="/app/recordatorios" class="sidebar-item" @click="emit('close')">
+            <span>🔔</span>
+            <span class="item-text">Recordatorios </span>
           </RouterLink>
         </li>
         <li>

@@ -1,9 +1,9 @@
 // En src/stores/auth.ts
-import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import apiClient from '@/services/api'
+import { defineStore } from 'pinia'
+import apiClient from '@services/api'
 import router from '@/router'
-import { connectSocket, disconnectSocket } from '@/services/socketService'
+import { connectSocket, disconnectSocket } from '@services/socketService'
 
 export const useAuthStore = defineStore('auth', () => {
   // --- STATE ---

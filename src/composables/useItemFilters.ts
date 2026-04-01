@@ -1,5 +1,5 @@
 import { ref, computed, type Ref } from 'vue'
-import type { Item } from '@/data/DataTypes'
+import type { Item } from '@data/DataTypes'
 
 // Recibe la lista reactiva de items como argumento
 export function useItemFilters(items: Ref<Item[]>) {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import PomodoroTimer from '@/components/PomodoroTimer.vue' // Asumiendo la ruta
+import PomodoroTimer from '@components/PomodoroTimer.vue' // Asumiendo la ruta
 
 // --- Estado y Datos ---
 const workDuration = ref(25)

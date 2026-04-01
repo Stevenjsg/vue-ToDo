@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { Item } from '@/data/DataTypes'
+import type { Item } from '@data/DataTypes'
 
 const props = defineProps<{
   items: Item[]

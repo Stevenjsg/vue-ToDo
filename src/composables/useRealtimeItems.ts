@@ -1,9 +1,9 @@
 import { ref, onMounted, onUnmounted, watch, type Ref } from 'vue'
-import type { Item } from '@/data/DataTypes'
-import apiClient from '@/services/api'
-import { connectSocket, joinProjectRoom, leaveProjectRoom } from '@/services/socketService'
 import type { Socket } from 'socket.io-client'
-import { useAuthStore } from '@/stores/auth'
+import type { Item } from '@data/DataTypes'
+import apiClient from '@services/api'
+import { connectSocket, joinProjectRoom, leaveProjectRoom } from '@services/socketService'
+import { useAuthStore } from '@stores/auth'
 
 // Recibe el ID del proyecto como argumento reactivo (ref o computed)
 export function useRealtimeItems(projectId: Ref<number | null>) {

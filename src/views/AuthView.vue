@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, shallowRef, type Component } from 'vue'
 import { useRouter } from 'vue-router'
-import LoginForm from '@/components/LoginForm.vue'
-import RegisterForm from '@/components/RegisterForm.vue'
+import LoginForm from '@components/LoginForm.vue'
+import RegisterForm from '@components/RegisterForm.vue'
 
 const router = useRouter()
 const activeComponentName = ref<'Login' | 'Register'>('Login')

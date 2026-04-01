@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
-import TheSidebar from '@/components/TheSidebar.vue'
+import TheSidebar from '@components/TheSidebar.vue'
 import IconMenu from '@/assets/icon/IconMenu.vue'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@stores/auth'
 
 const authStore = useAuthStore()
 const isSidebarVisible = ref(false) // Estado para el "drawer" móvil

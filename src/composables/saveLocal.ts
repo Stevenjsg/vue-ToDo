@@ -1,4 +1,4 @@
-import type { Item } from '@/data/DataTypes'
+import type { Item } from '@data/DataTypes'
 
 const readLocal = (key: string): Item[] => {
   if (typeof window !== 'undefined') {

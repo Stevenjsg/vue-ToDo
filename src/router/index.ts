@@ -2,12 +2,13 @@ import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vu
 import { useAuthStore } from '@/stores/auth'
 
 // Importa tus layouts y vistas
-import AppLayout from '../layouts/AppLayout.vue' // 👈 El nuevo layout
-import LandingPage from '../views/LandingPage.vue'
-import AuthView from '../views/AuthView.vue'
-import ShowTareas from '../views/ShowTareas.vue'
-import UserProfile from '@/views/UserProfile.vue'
-import PomodoroView from '@/views/PomodoroView.vue'
+import AppLayout from '@layouts/AppLayout.vue' // 👈 El nuevo layout
+import LandingPage from '@views/LandingPage.vue'
+import AuthView from '@views/AuthView.vue'
+import ShowTareas from '@views/ShowTareas.vue'
+import UserProfile from '@views/UserProfile.vue'
+import PomodoroView from '@views/PomodoroView.vue'
+import ReminderView from '@views/ReminderView.vue'
 // ... import UserProfile ...
 
 const routes = [
@@ -54,6 +55,11 @@ const routes = [
         path: 'pomodoro', // Se resuelve como /app/pomodoro
         name: 'Pomodoro',
         component: PomodoroView,
+      },
+      {
+        path: 'recordatorios', // Se resuelve como /app/pomodoro
+        name: 'recordatorios',
+        component: ReminderView,
       },
     ],
   },

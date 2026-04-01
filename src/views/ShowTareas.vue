@@ -1,15 +1,15 @@
 <script setup lang="ts">
 // Importa los composables y stores necesarios
-import { computed, defineProps, ref, toRef } from 'vue'
-import { useProjectStore, type Project } from '@/stores/projects'
-import { useRealtimeItems } from '@/composables/useRealtimeItems'
-import { useItemFilters } from '@/composables/useItemFilters'
-import apiClient from '@/services/api'
-import FormToDo from '@/components/FormToDo.vue'
-import ListToDo from '@/components/ListToDo.vue'
-import type { Item } from '@/data/DataTypes'
-import BaseModal from '@/components/common/BaseModal.vue'
-import EditTaskForm from '@/components/EditTaskForm.vue'
+import { computed, ref, toRef } from 'vue'
+import { useProjectStore, type Project } from '@stores/projects'
+import { useRealtimeItems } from '@composables/useRealtimeItems'
+import { useItemFilters } from '@composables/useItemFilters'
+import apiClient from '@services/api'
+import FormToDo from '@components/FormToDo.vue'
+import ListToDo from '@components/ListToDo.vue'
+import type { Item } from '@data/DataTypes'
+import BaseModal from '@components/common/BaseModal.vue'
+import EditTaskForm from '@components/EditTaskForm.vue'
 
 const projectStore = useProjectStore()
 const showAddTaskModal = ref(false)

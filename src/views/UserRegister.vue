@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import apiClient from '@/services/api'
+import apiClient from '@services/api'
 
 const email = ref('')
 const password = ref('')

@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import apiClient from '@/services/api'
-import router from '@/router' // Import router if needed for navigation
+import apiClient from '@services/api'
 
 // Define la interfaz completa para un Proyecto (ajústala si es necesario)
 export interface Project {

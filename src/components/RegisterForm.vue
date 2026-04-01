@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import apiClient from '@/services/api'
+import apiClient from '@services/api'
 
 const emit = defineEmits(['change-view'])
 

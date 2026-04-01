@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import apiClient from '@/services/api'
+import apiClient from '@services/api'
 
 // Interfaz local para los datos del perfil
 interface UserProfile {
