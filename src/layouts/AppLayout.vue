@@ -6,7 +6,7 @@ import IconMenu from '@/assets/icon/IconMenu.vue'
 import { useAuthStore } from '@stores/auth'
 
 const authStore = useAuthStore()
-const isSidebarVisible = ref(false) // Estado para el "drawer" móvil
+const isSidebarVisible = ref(false) 
 
 const toggleSidebar = () => {
   isSidebarVisible.value = !isSidebarVisible.value
@@ -44,7 +44,7 @@ onMounted(() => {
   padding: 2rem;
   overflow-y: auto;
   height: 100vh;
-  /* En escritorio, dejamos espacio para el sidebar colapsado */
+  /* En escritorio */
   margin-left: 80px;
 }
 
@@ -77,13 +77,12 @@ onMounted(() => {
 /* --- RESPONSIVE PARA MÓVIL --- */
 @media (max-width: 768px) {
   .main-content {
-    /* En móvil, el contenido ocupa el 100% */
     margin-left: 0;
     padding: 1rem;
   }
 
   .mobile-toggle-btn {
-    display: block; /* Visible en móvil */
+    display: block; 
   }
 }
 </style>

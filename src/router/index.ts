@@ -1,18 +1,15 @@
 import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-// Importa tus layouts y vistas
-import AppLayout from '@layouts/AppLayout.vue' // 👈 El nuevo layout
+import AppLayout from '@layouts/AppLayout.vue'
 import LandingPage from '@views/LandingPage.vue'
 import AuthView from '@views/AuthView.vue'
 import ShowTareas from '@views/ShowTareas.vue'
 import UserProfile from '@views/UserProfile.vue'
 import PomodoroView from '@views/PomodoroView.vue'
 import ReminderView from '@views/ReminderView.vue'
-// ... import UserProfile ...
 
 const routes = [
-  // --- Rutas de Ancho Completo (sin sidebar) ---
   {
     path: '/',
     name: 'Landing',
@@ -26,14 +23,13 @@ const routes = [
     meta: { guest: true },
   },
 
-  // --- Rutas de App (con sidebar) ---
   {
-    path: '/app', // Un prefijo común (opcional pero recomendado)
-    component: AppLayout, // 👈 El layout principal
-    meta: { requiresAuth: true }, // 👈 Protege todas las rutas hijas
+    path: '/app',
+    component: AppLayout,
+    meta: { requiresAuth: true },
     children: [
       {
-        path: 'tareas/personales', // Se resuelve como /app/tareas
+        path: 'tareas/personales',
         name: 'PersonalTasks',
         props: { projectId: null },
         component: ShowTareas,
@@ -47,17 +43,17 @@ const routes = [
         }),
       },
       {
-        path: 'perfil', // Se resuelve como /app/perfil
+        path: 'perfil',
         name: 'Perfil',
         component: UserProfile,
       },
       {
-        path: 'pomodoro', // Se resuelve como /app/pomodoro
+        path: 'pomodoro',
         name: 'Pomodoro',
         component: PomodoroView,
       },
       {
-        path: 'recordatorios', // Se resuelve como /app/pomodoro
+        path: 'recordatorios',
         name: 'recordatorios',
         component: ReminderView,
       },
@@ -70,7 +66,6 @@ const router = createRouter({
   routes,
 })
 
-// Tu guardia de navegación ahora funciona perfectamente
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 router.beforeEach(async (to, _from) => {
   const authStore = useAuthStore()
@@ -83,7 +78,6 @@ router.beforeEach(async (to, _from) => {
   }
 
   if (isGuestRoute && isAuth) {
-    // Redirige al dashboard principal
     return { name: 'PersonalTasks' }
   }
 
